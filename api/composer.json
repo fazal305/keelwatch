@@ -1,0 +1,36 @@
+{
+    "name": "keelwatch/api",
+    "description": "Keelwatch webhook ingestion and dashboard API",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.3",
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Keelwatch\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keelwatch\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "serve": "php -S 127.0.0.1:8080 -t public public/index.php",
+        "migrate": "php bin/migrate.php",
+        "test": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration",
+        "lint": "php bin/lint.php"
+    },
+    "config": {
+        "sort-packages": true,
+        "process-timeout": 0
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^13.3"
+    }
+}

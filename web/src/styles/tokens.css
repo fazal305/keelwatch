@@ -1,0 +1,125 @@
+/*
+ * Keelwatch design tokens. Components use these variables only; no raw
+ * colour values anywhere else. Dark is the default; light follows the OS
+ * unless the user picks a theme explicitly (data-theme on <html>).
+ */
+:root {
+  color-scheme: dark;
+
+  --bg: #0e1116;
+  --surface: #151a21;
+  --surface-elevated: #1c232c;
+  --surface-sunken: #0b0e12;
+  --border: #2a333f;
+  --border-strong: #3a4552;
+
+  --text-primary: #e6eaf0;
+  --text-secondary: #a7b0bd;
+  --text-muted: #8a94a3;
+
+  --accent: #6cb4ee;
+  --accent-contrast: #0b1520;
+  --accent-soft: rgb(108 180 238 / 0.14);
+
+  --success: #3fb27f;
+  --warning: #d9a441;
+  --danger: #e5534b;
+  --neutral: #8a94a3;
+
+  --success-soft: rgb(63 178 127 / 0.14);
+  --warning-soft: rgb(217 164 65 / 0.14);
+  --danger-soft: rgb(229 83 75 / 0.14);
+
+  --focus-ring: #6cb4ee;
+
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-condensed: 'IBM Plex Sans Condensed', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --text-xs: 0.75rem;   /* 12 */
+  --text-sm: 0.8125rem; /* 13 */
+  --text-md: 0.875rem;  /* 14 — base UI size */
+  --text-lg: 1rem;      /* 16 */
+  --text-xl: 1.25rem;   /* 20 */
+  --text-2xl: 1.5rem;   /* 24 */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius: 4px;
+  --radius-lg: 6px;
+
+  --rail-width: 216px;
+  --rail-width-compact: 64px;
+  --statusbar-height: 48px;
+
+  --duration-fast: 120ms;
+  --duration: 180ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-sunken: #eef0f3;
+  --border: #d9dee5;
+  --border-strong: #bcc4cf;
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #5f6b7a;
+
+  --accent: #1f6fb2;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgb(31 111 178 / 0.1);
+
+  --success: #1e7f53;
+  --warning: #8a5d00;
+  --danger: #c2362f;
+  --neutral: #5f6b7a;
+
+  --success-soft: rgb(30 127 83 / 0.1);
+  --warning-soft: rgb(138 93 0 / 0.1);
+  --danger-soft: rgb(194 54 47 / 0.1);
+
+  --focus-ring: #1f6fb2;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-elevated: #ffffff;
+    --surface-sunken: #eef0f3;
+    --border: #d9dee5;
+    --border-strong: #bcc4cf;
+
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #5f6b7a;
+
+    --accent: #1f6fb2;
+    --accent-contrast: #ffffff;
+    --accent-soft: rgb(31 111 178 / 0.1);
+
+    --success: #1e7f53;
+    --warning: #8a5d00;
+    --danger: #c2362f;
+    --neutral: #5f6b7a;
+
+    --success-soft: rgb(30 127 83 / 0.1);
+    --warning-soft: rgb(138 93 0 / 0.1);
+    --danger-soft: rgb(194 54 47 / 0.1);
+
+    --focus-ring: #1f6fb2;
+  }
+}

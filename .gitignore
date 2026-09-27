@@ -1,0 +1,33 @@
+# Secrets — only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# Local-only database setup (contains generated credentials)
+db/local-setup.sql
+
+# PHP
+api/vendor/
+api/.phpunit.cache/
+
+# Python
+worker/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Node / web
+node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/
+web/blob-report/
+web/playwright/.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

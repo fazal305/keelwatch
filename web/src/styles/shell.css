@@ -1,0 +1,284 @@
+/* ----- App shell: rail + workspace ----------------------------------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.topbar {
+  display: none;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+}
+
+.brand__mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+.brand__dot {
+  fill: var(--success);
+}
+
+.brand__name {
+  color: var(--text-primary);
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: 100dvh;
+  padding: var(--space-4) var(--space-3);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.rail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-2);
+}
+
+.rail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rail__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.rail__link:hover {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+
+.rail__link[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.rail__link[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.rail__foot {
+  margin-top: auto;
+  padding: 0 var(--space-1);
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1440px;
+  padding: var(--space-6);
+}
+
+.main:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ----- Status bar ----------------------------------------------------- */
+
+.statusbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-6);
+  min-height: var(--statusbar-height);
+  padding: var(--space-2) var(--space-6);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.statusbar__components {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-width: 0;
+}
+
+.statusbar__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.statusbar__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.statusbar__name {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.statusbar__freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.statusbar__freshness.is-stale {
+  color: var(--warning);
+}
+
+/* ----- Tablet: compact icon rail ------------------------------------- */
+
+@media (max-width: 1023.98px) and (min-width: 768px) {
+  .shell {
+    grid-template-columns: var(--rail-width-compact) minmax(0, 1fr);
+  }
+
+  .rail {
+    align-items: center;
+    padding-inline: var(--space-2);
+  }
+
+  .rail__head {
+    padding: 0;
+  }
+
+  .rail .brand__name,
+  .rail__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .rail__link {
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+  }
+
+  .main {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .statusbar {
+    padding-inline: var(--space-4);
+  }
+}
+
+/* ----- Mobile: top bar + off-canvas drawer --------------------------- */
+
+@media (max-width: 767.98px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    /* Without explicit rows, min-height stretches the top bar's row too
+       when page content is short, pushing the status bar down. */
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 52px;
+    padding: 0 var(--space-2);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rail {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(288px, 85vw);
+    height: 100dvh;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform var(--duration) var(--ease-out), visibility 0s linear var(--duration);
+  }
+
+  .shell[data-drawer-open] .rail {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--duration) var(--ease-out), visibility 0s;
+    box-shadow: 0 0 0 1px var(--border), 0 16px 48px rgb(0 0 0 / 0.4);
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgb(0 0 0 / 0.5);
+  }
+
+  .statusbar {
+    top: 52px;
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .statusbar__title {
+    display: none;
+  }
+
+  .main {
+    padding: var(--space-4);
+  }
+}
