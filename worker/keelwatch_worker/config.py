@@ -38,6 +38,11 @@ class Settings:
     retry_base_s: int = 5
     retry_max_s: int = 300
     analysis_budget_ms: int = 120_000
+    phase_reserve_ms: int = 2000
+    llm_timeout_s: int = 30
+    llm_max_attempts: int = 2
+    llm_breaker_failures: int = 3
+    llm_breaker_cooldown_s: int = 120
 
     def with_database(self, name: str) -> Settings:
         return Settings(**{**self.__dict__, "db_name": name})
@@ -100,6 +105,11 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         retry_max_s=positive_int("JOB_RETRY_MAX_S", 300, 86400),
         # Matches the analysis_runs CHECK constraint (1 s .. 1 h).
         analysis_budget_ms=positive_int("ANALYSIS_BUDGET_MS", 120_000, 3_600_000),
+        phase_reserve_ms=positive_int("PHASE_CHECKPOINT_RESERVE_MS", 2000, 60_000),
+        llm_timeout_s=positive_int("LLM_TIMEOUT_S", 30, 600),
+        llm_max_attempts=positive_int("LLM_MAX_ATTEMPTS", 2, 5),
+        llm_breaker_failures=positive_int("LLM_BREAKER_FAILURES", 3, 50),
+        llm_breaker_cooldown_s=positive_int("LLM_BREAKER_COOLDOWN_S", 120, 3600),
     )
     if settings.analysis_budget_ms < 1000:
         errors.append("ANALYSIS_BUDGET_MS must be at least 1000")

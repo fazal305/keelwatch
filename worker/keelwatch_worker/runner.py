@@ -1,8 +1,11 @@
 """The job loop: recover expired leases, claim, process, acknowledge.
 
-A handler's writes and the job's completion commit in one transaction, so
-a crash between them is impossible: either both happen or neither does,
-and the lease-expiry path retries the job.
+Two kinds of handler:
+- transactional (default): the handler's writes and the job's completion
+  commit in one transaction; a crash leaves neither.
+- SelfManaged: long-running work (analysis runs) that commits its own
+  progress as it goes and keeps its lease alive; only the completion is a
+  final small transaction. Retrying such a job resumes from its checkpoints.
 """
 
 from __future__ import annotations
@@ -12,6 +15,7 @@ import random
 import threading
 import time
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 from pymysql.connections import Connection
@@ -28,6 +32,11 @@ class LeaseLost(Exception):
     """Another worker reclaimed the job while this one was processing it."""
 
 
+@dataclass(frozen=True)
+class SelfManaged:
+    fn: Callable[[Connection, Job, Callable[[], None]], dict[str, Any]]
+
+
 class JobRunner:
     RECOVER_EVERY_S = 30.0
 
@@ -38,7 +47,7 @@ class JobRunner:
         logger: Logger,
         stop: threading.Event,
         queues: tuple[str, ...] = ("events",),
-        handlers: dict[str, Handler] | None = None,
+        handlers: dict[str, Handler | SelfManaged] | None = None,
         rng: random.Random | None = None,
     ) -> None:
         self._connect = connect
@@ -48,7 +57,7 @@ class JobRunner:
         self._queues = queues
         # Retry jitter only; not used for anything security-sensitive.
         self._rng = rng or random.Random()  # noqa: S311
-        self._handlers: dict[str, Handler] = handlers or {
+        self._handlers: dict[str, Handler | SelfManaged] = handlers or {
             "github_event": lambda conn, job: handle_github_event(
                 conn, job, settings.analysis_budget_ms
             ),
@@ -103,11 +112,21 @@ class JobRunner:
         started = time.perf_counter()
 
         handler = self._handlers.get(job.type)
+
+        def keep_lease() -> None:
+            if not queue.extend_lease(job):
+                raise LeaseLost(f"lease on job {job.id} was lost during processing")
+
         try:
             if handler is None:
                 raise PermanentError(f"no handler for job type {job.type!r}")
-            conn.begin()
-            result = handler(conn, job)
+            if isinstance(handler, SelfManaged):
+                # Commits its own progress (autocommit); only completion is transactional.
+                result = handler.fn(conn, job, keep_lease)
+                conn.begin()
+            else:
+                conn.begin()
+                result = handler(conn, job)
             if not queue.complete(job):
                 raise LeaseLost(f"lease on job {job.id} was lost before completion")
             conn.commit()
@@ -127,8 +146,9 @@ class JobRunner:
 
     def _record_failure(self, queue: JobQueue, job: Job, exc: Exception, log: Logger) -> None:
         if isinstance(exc, LeaseLost):
-            # The job belongs to someone else now; nothing of ours was committed.
-            log.warning("job lease lost; work rolled back", job_id=job.id)
+            # The job belongs to someone else now. Transactional work was rolled
+            # back; self-managed work stopped at its last committed checkpoint.
+            log.warning("job lease lost; stopped", job_id=job.id)
             return
 
         permanent = isinstance(exc, PermanentError)

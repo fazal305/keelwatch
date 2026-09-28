@@ -117,6 +117,21 @@ class JobQueue:
             )
             return cur.rowcount == 1
 
+    def extend_lease(self, job: Job) -> bool:
+        """Push locked_until forward for a long job. False means the lease was
+        already lost (expired and reclaimed), so the caller must stop."""
+        with self._conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE jobs
+                SET locked_until = UTC_TIMESTAMP(3) + INTERVAL %s SECOND,
+                    updated_at = UTC_TIMESTAMP(3)
+                WHERE id = %s AND status = 'running' AND locked_by = %s
+                """,
+                (self._lease_s, job.id, self._worker_id),
+            )
+            return cur.rowcount == 1
+
     def fail(self, job: Job, error: str, retry_in_s: float | None) -> str:
         """Record a failed attempt. retry_in_s=None means dead-letter now.
         Returns the new status ('queued', 'dead') or 'lost' if the lease was gone."""
