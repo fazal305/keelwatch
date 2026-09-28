@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "phase": "llm_reasoning",
+  "severity": "low",
+  "category": "architecture",
+  "confidence": "low",
+  "title": "Growing coupling between the billing and auth modules",
+  "description": "Four of the changed files import across these two modules, up from one in the previous run.",
+  "evidence": { "kind": "metric", "metric": "cross_module_imports", "value": 4, "threshold": 2 },
+  "location": null,
+  "recommendation": "Consider an interface between the modules.",
+  "source": "llm",
+  "rule_id": null,
+  "provider": "groq",
+  "model": "llama-3.3-70b-versatile"
+}

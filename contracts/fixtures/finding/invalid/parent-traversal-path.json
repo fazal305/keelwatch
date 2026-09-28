@@ -1,0 +1,1 @@
+{ "base": "rule-secret.json", "set": { "location.file_path": "src/../../etc/passwd" } }

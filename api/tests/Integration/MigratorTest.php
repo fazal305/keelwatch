@@ -13,9 +13,15 @@ final class MigratorTest extends DatabaseTestCase
     public function testAppliesPendingMigrationsOnceAndInOrder(): void
     {
         $migrator = new Migrator($this->pdo, Bootstrap::MIGRATIONS);
+        $all = array_map(
+            static fn (string $p): string => basename($p, '.sql'),
+            glob(Bootstrap::MIGRATIONS . '/*.sql') ?: [],
+        );
+        sort($all);
 
-        self::assertSame(['0001_worker_heartbeats'], $migrator->pending());
-        self::assertSame(['0001_worker_heartbeats'], $migrator->migrate());
+        self::assertGreaterThanOrEqual(6, count($all));
+        self::assertSame($all, $migrator->pending());
+        self::assertSame($all, $migrator->migrate());
         self::assertSame([], $migrator->pending());
         self::assertSame([], $migrator->migrate(), 'second run must be a no-op');
 

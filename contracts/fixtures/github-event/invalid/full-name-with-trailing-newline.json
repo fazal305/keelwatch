@@ -1,0 +1,1 @@
+{ "base": "push.json", "set": { "repository.full_name": "example-org/example-repo\n" } }

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "delivery_id": "8a1b2c3d-0000-11e3-81ab-4c9367dc0958",
+  "event": "push",
+  "action": null,
+  "type": "push",
+  "occurred_at": "2026-09-27T12:00:00.123Z",
+  "correlation_id": "corr-push-created-0001",
+  "installation": { "github_id": 12345678 },
+  "repository": { "github_id": 87654321, "full_name": "example-org/example-repo", "private": true, "default_branch": null },
+  "actor": null,
+  "push": { "ref": "refs/heads/feature/x", "before": "0000000000000000000000000000000000000000", "after": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "commit_count": 0, "created": true, "deleted": false, "forced": false }
+}

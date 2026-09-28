@@ -1,0 +1,1 @@
+{ "base": "rule-secret.json", "set": { "location.file_path": "C:\\Users\\dev\\app\\a.js" } }

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:keelwatch:contract:github-event:v1",
+  "title": "Normalized GitHub event envelope",
+  "description": "Produced by the API from a verified webhook; consumed by the worker. Contains no author emails and no raw payload.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "delivery_id",
+    "event",
+    "action",
+    "type",
+    "occurred_at",
+    "correlation_id",
+    "installation",
+    "repository",
+    "actor"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "delivery_id": { "type": "string", "pattern": "^[A-Za-z0-9-]{1,64}$" },
+    "event": { "enum": ["push", "pull_request"] },
+    "action": { "type": ["string", "null"], "maxLength": 64 },
+    "type": {
+      "enum": [
+        "push",
+        "pull_request.opened",
+        "pull_request.synchronize",
+        "pull_request.reopened",
+        "pull_request.ready_for_review",
+        "pull_request.closed"
+      ]
+    },
+    "occurred_at": { "$ref": "#/$defs/utcTimestamp" },
+    "correlation_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{8,128}$" },
+    "installation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["github_id"],
+      "properties": { "github_id": { "$ref": "#/$defs/githubId" } }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["github_id", "full_name", "private", "default_branch"],
+      "properties": {
+        "github_id": { "$ref": "#/$defs/githubId" },
+        "full_name": { "type": "string", "maxLength": 200, "pattern": "^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$" },
+        "private": { "type": "boolean" },
+        "default_branch": { "type": ["string", "null"], "maxLength": 255 }
+      }
+    },
+    "actor": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["login"],
+          "properties": {
+            "login": { "type": "string", "pattern": "^[A-Za-z0-9-]{1,39}(\\[bot\\])?$" }
+          }
+        }
+      ]
+    },
+    "push": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "before", "after", "commit_count", "created", "deleted", "forced"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "before": { "$ref": "#/$defs/sha" },
+        "after": { "$ref": "#/$defs/sha" },
+        "commit_count": { "type": "integer", "minimum": 0 },
+        "created": { "type": "boolean" },
+        "deleted": { "type": "boolean" },
+        "forced": { "type": "boolean" }
+      }
+    },
+    "pull_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "number",
+        "state",
+        "draft",
+        "merged",
+        "head_sha",
+        "base_sha",
+        "head_ref",
+        "base_ref",
+        "changed_files",
+        "additions",
+        "deletions"
+      ],
+      "properties": {
+        "number": { "type": "integer", "minimum": 1 },
+        "state": { "enum": ["open", "closed"] },
+        "draft": { "type": "boolean" },
+        "merged": { "type": "boolean" },
+        "head_sha": { "$ref": "#/$defs/sha" },
+        "base_sha": { "$ref": "#/$defs/sha" },
+        "head_ref": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "base_ref": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "changed_files": { "type": ["integer", "null"], "minimum": 0 },
+        "additions": { "type": ["integer", "null"], "minimum": 0 },
+        "deletions": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event": { "const": "push" } } },
+      "then": {
+        "required": ["push"],
+        "not": { "required": ["pull_request"] },
+        "properties": { "type": { "const": "push" }, "action": { "type": "null" } }
+      }
+    },
+    {
+      "if": { "properties": { "event": { "const": "pull_request" } } },
+      "then": {
+        "required": ["pull_request"],
+        "not": { "required": ["push"] },
+        "properties": {
+          "type": { "pattern": "^pull_request\\." },
+          "action": { "type": "string" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "githubId": { "type": "integer", "minimum": 1 },
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$" },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    }
+  }
+}

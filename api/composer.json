@@ -22,7 +22,7 @@
     "scripts": {
         "serve": "php -S 127.0.0.1:8080 -t public public/index.php",
         "migrate": "php bin/migrate.php",
-        "test": "phpunit --testsuite unit",
+        "test": "phpunit --testsuite unit,contract",
         "test:integration": "phpunit --testsuite integration",
         "lint": "php bin/lint.php"
     },
@@ -31,6 +31,7 @@
         "process-timeout": 0
     },
     "require-dev": {
+        "opis/json-schema": "2.6",
         "phpunit/phpunit": "^13.3"
     }
 }

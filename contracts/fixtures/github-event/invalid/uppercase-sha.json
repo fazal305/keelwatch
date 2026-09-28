@@ -1,0 +1,1 @@
+{ "base": "pr-opened.json", "set": { "pull_request.head_sha": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" } }

@@ -60,9 +60,9 @@ jobs:
         working-directory: api
         run: php bin/lint.php
 
-      - name: Unit tests
+      - name: Unit and contract tests
         working-directory: api
-        run: vendor/bin/phpunit --testsuite unit
+        run: vendor/bin/phpunit --testsuite unit,contract
 
       - name: Integration tests
         working-directory: api

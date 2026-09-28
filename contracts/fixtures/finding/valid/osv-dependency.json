@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "phase": "dependencies",
+  "severity": "critical",
+  "category": "dependency",
+  "confidence": "high",
+  "title": "Dependency upgraded to a version with a known advisory",
+  "description": "The new version is listed in a published vulnerability advisory.",
+  "evidence": {
+    "kind": "dependency", "package": "example-lib", "ecosystem": "npm",
+    "version_before": "1.2.3", "version_after": "1.3.0", "advisory_ids": ["GHSA-xxxx-yyyy-zzzz", "CVE-2026-12345"]
+  },
+  "location": { "file_path": "package.json", "line_start": null, "line_end": null },
+  "recommendation": null,
+  "source": "osv",
+  "rule_id": null,
+  "provider": null,
+  "model": null
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:keelwatch:contract:analysis-job:v1",
+  "title": "Analysis job payload",
+  "description": "payload of a jobs row with queue = 'analysis'. The run row holds all state; the job only points at it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "repository_id", "trigger", "correlation_id", "budget_ms"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "run_id": { "type": "integer", "minimum": 1 },
+    "repository_id": { "type": "integer", "minimum": 1 },
+    "trigger": { "enum": ["webhook", "schedule", "manual", "resume"] },
+    "correlation_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{8,128}$" },
+    "budget_ms": { "type": "integer", "minimum": 1000, "maximum": 3600000 }
+  }
+}

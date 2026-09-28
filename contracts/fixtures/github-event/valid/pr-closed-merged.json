@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "delivery_id": "ac3d4e5f-2222-11e3-81ab-4c9367dc0958",
+  "event": "pull_request",
+  "action": "closed",
+  "type": "pull_request.closed",
+  "occurred_at": "2026-09-27T13:00:00Z",
+  "correlation_id": "corr-pr-closed-0001",
+  "installation": { "github_id": 12345678 },
+  "repository": { "github_id": 87654321, "full_name": "example-org/example-repo", "private": false, "default_branch": "main" },
+  "actor": { "login": "octo-dev" },
+  "pull_request": {
+    "number": 42, "state": "closed", "draft": false, "merged": true,
+    "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "head_ref": "feature/login", "base_ref": "main",
+    "changed_files": null, "additions": null, "deletions": null
+  }
+}

@@ -30,7 +30,7 @@ final class HealthServiceTest extends DatabaseTestCase
         $database = $this->component($report, 'database');
 
         self::assertSame('degraded', $database['status']);
-        self::assertSame(1, $database['pending_migrations']);
+        self::assertSame(count(glob(Bootstrap::MIGRATIONS . '/*.sql') ?: []), $database['pending_migrations']);
         self::assertTrue($this->health->readiness()['ready']);
     }
 

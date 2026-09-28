@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:keelwatch:contract:finding:v1",
+  "title": "Normalized analysis finding",
+  "description": "What every analysis phase emits after normalization. Mirrors the analysis_findings table constraints. Findings are signals, not verdicts: confidence is mandatory.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "fingerprint",
+    "phase",
+    "severity",
+    "category",
+    "confidence",
+    "title",
+    "description",
+    "evidence",
+    "location",
+    "recommendation",
+    "source",
+    "rule_id",
+    "provider",
+    "model"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "phase": { "type": "string", "pattern": "^[a-z_]{1,32}$" },
+    "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+    "category": { "enum": ["security", "logic", "dependency", "architecture", "quality"] },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 8000 },
+    "evidence": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "enum": ["code", "dependency", "metric"] },
+            "snippet": { "type": "string", "maxLength": 2000 },
+            "redacted": { "type": "boolean" },
+            "package": { "type": "string", "maxLength": 214 },
+            "ecosystem": { "enum": ["npm", "pypi", "packagist", "go", "maven", "cargo", "rubygems", "nuget"] },
+            "version_before": { "type": ["string", "null"], "maxLength": 100 },
+            "version_after": { "type": ["string", "null"], "maxLength": 100 },
+            "advisory_ids": {
+              "type": "array",
+              "maxItems": 50,
+              "items": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,64}$" }
+            },
+            "metric": { "type": "string", "maxLength": 64 },
+            "value": { "type": "number" },
+            "threshold": { "type": "number" }
+          }
+        }
+      ]
+    },
+    "location": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file_path", "line_start", "line_end"],
+          "properties": {
+            "file_path": {
+              "description": "Repository-relative path. Never absolute, never a drive path, never containing '..' segments.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "pattern": "^(?![/\\\\])(?![A-Za-z]:)(?!(.*[/\\\\])?\\.\\.([/\\\\]|$))[^\\x00]+$"
+            },
+            "line_start": { "type": ["integer", "null"], "minimum": 1 },
+            "line_end": { "type": ["integer", "null"], "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "recommendation": { "type": ["string", "null"], "maxLength": 4000 },
+    "source": { "enum": ["rule", "llm", "osv"] },
+    "rule_id": { "type": ["string", "null"], "pattern": "^[a-z0-9][a-z0-9._-]{0,99}$" },
+    "provider": { "type": ["string", "null"], "maxLength": 64 },
+    "model": { "type": ["string", "null"], "maxLength": 128 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "source": { "const": "llm" } } },
+      "then": { "properties": { "provider": { "type": "string" }, "model": { "type": "string" } } }
+    },
+    {
+      "if": { "properties": { "source": { "const": "rule" } } },
+      "then": { "properties": { "rule_id": { "type": "string" } } }
+    }
+  ]
+}

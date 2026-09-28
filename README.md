@@ -65,7 +65,7 @@ Health endpoints:
 ## Tests
 
 ```bash
-cd api && vendor/bin/phpunit --testsuite unit && vendor/bin/phpunit --testsuite integration
+cd api && vendor/bin/phpunit --testsuite unit,contract && vendor/bin/phpunit --testsuite integration
 cd worker && .venv/Scripts/python -m pytest && .venv/Scripts/python -m pytest -m integration
 cd web && npm run lint && npm test && npm run test:e2e
 ```
