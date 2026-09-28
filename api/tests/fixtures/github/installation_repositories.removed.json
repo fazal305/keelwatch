@@ -1,0 +1,7 @@
+{
+  "action": "removed",
+  "installation": { "id": 12345678, "account": { "login": "example-org", "id": 111, "type": "Organization" } },
+  "repositories_added": [],
+  "repositories_removed": [ { "id": 87654322, "full_name": "example-org/internal-tool", "private": true } ],
+  "sender": { "login": "octo-dev", "id": 222, "type": "User" }
+}

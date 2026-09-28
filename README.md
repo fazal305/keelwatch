@@ -62,6 +62,38 @@ Health endpoints:
 - `GET /api/system/health`: per-component report behind the System Health page
 - `python -m keelwatch_worker --check`: the worker's one-shot readiness probe
 
+## GitHub webhooks
+
+`POST /webhooks/github` accepts GitHub App deliveries (`push`, `pull_request`,
+`installation`, `installation_repositories`, `ping`). Per request:
+
+1. Rejects early, without reading the database: non-JSON content type (415),
+   malformed GitHub headers (400), body over `WEBHOOK_MAX_BODY_BYTES` (413).
+2. Verifies `X-Hub-Signature-256` over the raw body (HMAC-SHA256,
+   constant-time compare; `GITHUB_WEBHOOK_SECRET_PREVIOUS` supports rotation).
+   Failures return 401 and are counted per client; past
+   `WEBHOOK_FAILED_AUTH_LIMIT` per window they return 429. Valid deliveries
+   never touch the counter.
+3. In one transaction: records the delivery (a repeated delivery ID returns
+   200 `duplicate`), syncs installations and repositories, stores the
+   normalized event (`contracts/github-event.v1.json`), and enqueues a job.
+   No raw payload and no email address is stored.
+4. Answers 202 with a `Server-Timing` header (`verify`, `db`, `total`).
+
+Signed payloads with an unexpected shape are recorded as ignored
+(`invalid_payload`) rather than failing, so GitHub doesn't retry them
+forever. A database outage returns 503 so the delivery can be redelivered.
+
+Send signed test deliveries to a local API (loopback only; secret read
+from `.env`):
+
+```bash
+php scripts/send-webhook.php push
+php scripts/send-webhook.php pull_request.opened
+php scripts/send-webhook.php push --bad-signature
+php scripts/send-webhook.php push --repeat=200
+```
+
 ## Tests
 
 ```bash

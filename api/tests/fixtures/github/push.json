@@ -1,0 +1,21 @@
+{
+  "ref": "refs/heads/main", "before": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "after": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "created": false, "deleted": false, "forced": false,
+  "base_ref": null, "compare": "https://github.com/example-org/example-repo/compare/aaaaaaa...bbbbbbb",
+  "commits": [
+    { "id": "cccccccccccccccccccccccccccccccccccccccc", "message": "Add login form", "timestamp": "2026-09-27T17:00:00+05:00",
+      "author": { "name": "Octo Dev", "email": "octo.dev@example.com", "username": "octo-dev" },
+      "committer": { "name": "Octo Dev", "email": "octo.dev@example.com", "username": "octo-dev" },
+      "added": ["src/login.js"], "removed": [], "modified": ["package.json"] },
+    { "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "message": "Fix typo", "timestamp": "2026-09-27T17:05:00+05:00",
+      "author": { "name": "Octo Dev", "email": "octo.dev@example.com", "username": "octo-dev" },
+      "committer": { "name": "Octo Dev", "email": "octo.dev@example.com", "username": "octo-dev" },
+      "added": [], "removed": [], "modified": ["src/login.js"] }
+  ],
+  "head_commit": { "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "message": "Fix typo", "timestamp": "2026-09-27T17:05:00+05:00",
+    "author": { "name": "Octo Dev", "email": "octo.dev@example.com" } },
+  "repository": { "id": 87654321, "node_id": "R_kgDOExample", "name": "example-repo", "full_name": "example-org/example-repo", "private": false, "owner": { "login": "example-org", "id": 111, "type": "Organization", "email": "owner-contact@example.com" }, "html_url": "https://github.com/example-org/example-repo", "default_branch": "main", "pushed_at": 1790000000 },
+  "pusher": { "name": "octo-dev", "email": "octo.dev@example.com" },
+  "installation": { "id": 12345678, "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uMTIzNDU2Nzg=" },
+  "sender": { "login": "octo-dev", "id": 222, "type": "User" }
+}

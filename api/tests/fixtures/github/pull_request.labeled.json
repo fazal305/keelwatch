@@ -1,0 +1,14 @@
+{
+  "action": "labeled", "number": 42,
+  "pull_request": {
+    "id": 999, "number": 42, "state": "open", "draft": false, "merged": false, "title": "Add login form",
+    "body": "Contact me at octo.dev@example.com", "updated_at": "2026-09-27T12:10:00Z",
+    "user": { "login": "octo-dev", "id": 222, "type": "User" },
+    "head": { "ref": "feature/login", "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "repo": { "id": 87654321 } },
+    "base": { "ref": "main", "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "repo": { "id": 87654321 } },
+    "changed_files": 2, "additions": 120, "deletions": 15
+  },
+  "repository": { "id": 87654321, "node_id": "R_kgDOExample", "name": "example-repo", "full_name": "example-org/example-repo", "private": false, "owner": { "login": "example-org", "id": 111, "type": "Organization", "email": "owner-contact@example.com" }, "html_url": "https://github.com/example-org/example-repo", "default_branch": "main", "pushed_at": 1790000000 },
+  "installation": { "id": 12345678, "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uMTIzNDU2Nzg=" },
+  "sender": { "login": "octo-dev", "id": 222, "type": "User" }
+}

@@ -15,7 +15,7 @@ from jsonschema import Draft202012Validator, ValidationError
 from jsonschema.validators import extend
 
 CONTRACTS_DIR = Path(__file__).resolve().parents[2] / "contracts"
-CONTRACTS = ("github-event", "analysis-job", "finding")
+CONTRACTS = ("github-event", "event-job", "analysis-job", "finding")
 
 
 def ecma_regex(pattern: str) -> str:

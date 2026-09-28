@@ -7,7 +7,8 @@ on a schema library.
 
 | Contract | Producer | Consumer | Where it lives at runtime |
 | --- | --- | --- | --- |
-| `github-event.v1.json` | API webhook normalizer | Worker | `repository_events.envelope`, `jobs.payload` (queue `events`) |
+| `github-event.v1.json` | API webhook normalizer | Worker | `repository_events.envelope` |
+| `event-job.v1.json` | API webhook handler | Worker | `jobs.payload` (queue `events`), a pointer to the event row |
 | `analysis-job.v1.json` | API / scheduler / worker | Worker | `jobs.payload` (queue `analysis`) |
 | `finding.v1.json` | Worker analysis phases | API / dashboard | `analysis_findings` rows |
 

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:keelwatch:contract:event-job:v1",
+  "title": "Event job payload",
+  "description": "payload of a jobs row with queue = 'events'. Points at the immutable repository_events row that holds the github-event envelope.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "repository_id", "correlation_id"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "event_id": { "type": "integer", "minimum": 1 },
+    "repository_id": { "type": "integer", "minimum": 1 },
+    "correlation_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{8,128}$" }
+  }
+}

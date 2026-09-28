@@ -16,6 +16,7 @@ final class Request
         public readonly array $headers = [],
         public readonly array $query = [],
         private readonly ?string $rawBody = null,
+        public readonly string $clientIp = '0.0.0.0',
     ) {
     }
 
@@ -41,6 +42,9 @@ final class Request
             path: self::normalisePath(is_string($path) ? $path : '/'),
             headers: $headers,
             query: $_GET,
+            // REMOTE_ADDR only: forwarded headers are client-controlled unless a
+            // trusted proxy is configured, which Keelwatch does not do yet.
+            clientIp: (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'),
         );
     }
 
@@ -56,6 +60,27 @@ final class Request
     public function rawBody(): string
     {
         return $this->rawBody ?? (string) file_get_contents('php://input');
+    }
+
+    /**
+     * Reads at most $maxBytes; returns null if the body is larger, without
+     * reading the rest.
+     */
+    public function rawBodyWithin(int $maxBytes): ?string
+    {
+        if ($this->rawBody !== null) {
+            return strlen($this->rawBody) > $maxBytes ? null : $this->rawBody;
+        }
+        $stream = fopen('php://input', 'rb');
+        if ($stream === false) {
+            return '';
+        }
+        try {
+            $body = (string) stream_get_contents($stream, $maxBytes + 1);
+        } finally {
+            fclose($stream);
+        }
+        return strlen($body) > $maxBytes ? null : $body;
     }
 
     private static function normalisePath(string $path): string

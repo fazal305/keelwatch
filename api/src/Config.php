@@ -14,9 +14,11 @@ namespace Keelwatch;
 final class Config
 {
     public const ENVIRONMENTS = ['development', 'test', 'production'];
+    public const MIN_SECRET_LENGTH = 20;
 
     /**
      * @param list<string> $corsOrigins
+     * @param list<string> $webhookSecrets current secret first, then the previous one during rotation
      */
     private function __construct(
         public readonly string $appEnv,
@@ -29,6 +31,10 @@ final class Config
         public readonly string $dbPassword,
         public readonly int $dbConnectTimeoutS,
         public readonly int $workerStaleAfterS,
+        public readonly array $webhookSecrets,
+        public readonly int $webhookMaxBodyBytes,
+        public readonly int $webhookFailedAuthLimit,
+        public readonly int $webhookFailedAuthWindowS,
     ) {
     }
 
@@ -78,6 +84,27 @@ final class Config
             $corsOrigins[] = $origin;
         }
 
+        // The webhook endpoint answers 503 until a secret is configured, so a
+        // fresh checkout still boots; production refuses to start without one.
+        $webhookSecrets = [];
+        foreach (['GITHUB_WEBHOOK_SECRET', 'GITHUB_WEBHOOK_SECRET_PREVIOUS'] as $key) {
+            $secret = trim($env[$key] ?? '');
+            if ($secret === '') {
+                continue;
+            }
+            if (strlen($secret) < self::MIN_SECRET_LENGTH) {
+                $errors[] = "{$key} must be at least " . self::MIN_SECRET_LENGTH . ' characters';
+                continue;
+            }
+            $webhookSecrets[] = $secret;
+        }
+        if (trim($env['GITHUB_WEBHOOK_SECRET'] ?? '') === '' && $webhookSecrets !== []) {
+            $errors[] = 'GITHUB_WEBHOOK_SECRET_PREVIOUS is set but GITHUB_WEBHOOK_SECRET is not';
+        }
+        if ($appEnv === 'production' && $webhookSecrets === []) {
+            $errors[] = 'GITHUB_WEBHOOK_SECRET is required in production';
+        }
+
         $config = new self(
             appEnv: $appEnv,
             appVersion: trim($env['APP_VERSION'] ?? '') ?: '0.0.0',
@@ -89,6 +116,11 @@ final class Config
             dbPassword: $required('DB_PASSWORD'),
             dbConnectTimeoutS: $positiveInt('DB_CONNECT_TIMEOUT_S', 2, 30),
             workerStaleAfterS: $positiveInt('WORKER_STALE_AFTER_S', 35, 3600),
+            webhookSecrets: $webhookSecrets,
+            // GitHub caps webhook payloads at 25 MB.
+            webhookMaxBodyBytes: $positiveInt('WEBHOOK_MAX_BODY_BYTES', 5 * 1024 * 1024, 25 * 1024 * 1024),
+            webhookFailedAuthLimit: $positiveInt('WEBHOOK_FAILED_AUTH_LIMIT', 20, 10000),
+            webhookFailedAuthWindowS: $positiveInt('WEBHOOK_FAILED_AUTH_WINDOW_S', 300, 86400),
         );
 
         if ($errors !== []) {
@@ -100,17 +132,21 @@ final class Config
 
     public function withDatabase(string $name): self
     {
-        return new self(
-            $this->appEnv,
-            $this->appVersion,
-            $this->corsOrigins,
-            $this->dbHost,
-            $this->dbPort,
-            $name,
-            $this->dbUser,
-            $this->dbPassword,
-            $this->dbConnectTimeoutS,
-            $this->workerStaleAfterS,
-        );
+        return $this->with(['dbName' => $name]);
+    }
+
+    /**
+     * @param array<string, mixed> $overrides property name => value
+     */
+    public function with(array $overrides): self
+    {
+        $values = get_object_vars($this);
+        foreach ($overrides as $key => $value) {
+            if (!array_key_exists($key, $values)) {
+                throw new \InvalidArgumentException("Unknown config property {$key}");
+            }
+            $values[$key] = $value;
+        }
+        return new self(...$values);
     }
 }

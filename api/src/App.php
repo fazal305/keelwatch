@@ -11,6 +11,7 @@ use Keelwatch\Http\Response;
 use Keelwatch\Http\Router;
 use Keelwatch\Support\CorrelationId;
 use Keelwatch\Support\Logger;
+use Keelwatch\Webhook\WebhookHandler;
 use Throwable;
 
 /**
@@ -21,11 +22,17 @@ final class App
 {
     private readonly Router $router;
 
+    /** Set per request so route handlers can log with the request's correlation ID. */
+    private string $correlationId = '';
+    private Logger $requestLogger;
+
     public function __construct(
         private readonly Config $config,
         private readonly HealthService $health,
         private readonly Logger $logger,
+        private readonly ?WebhookHandler $webhooks = null,
     ) {
+        $this->requestLogger = $logger;
         $this->router = new Router();
         $this->registerRoutes();
     }
@@ -35,6 +42,8 @@ final class App
         $started = hrtime(true);
         $correlationId = CorrelationId::resolve($request->header(CorrelationId::HEADER));
         $logger = $this->logger->withCorrelationId($correlationId);
+        $this->correlationId = $correlationId;
+        $this->requestLogger = $logger;
         $cors = new Cors($this->config->corsOrigins);
 
         try {
@@ -78,6 +87,13 @@ final class App
         });
 
         $this->router->get('/api/system/health', fn (): Response => Response::json($this->health->report()));
+
+        if ($this->webhooks !== null) {
+            $this->router->post(
+                '/webhooks/github',
+                fn (Request $request): Response => $this->webhooks->handle($request, $this->correlationId, $this->requestLogger),
+            );
+        }
     }
 
     private static function withSecurityHeaders(Response $response): Response

@@ -1,0 +1,9 @@
+{
+  "action": "created",
+  "installation": { "id": 12345678, "account": { "login": "example-org", "id": 111, "type": "Organization" }, "repository_selection": "selected" },
+  "repositories": [
+    { "id": 87654321, "name": "example-repo", "full_name": "example-org/example-repo", "private": false },
+    { "id": 87654322, "name": "internal-tool", "full_name": "example-org/internal-tool", "private": true }
+  ],
+  "sender": { "login": "octo-dev", "id": 222, "type": "User" }
+}

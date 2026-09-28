@@ -9,6 +9,7 @@ use Keelwatch\Database\Connection;
 use Keelwatch\Health\HealthService;
 use Keelwatch\Support\Env;
 use Keelwatch\Support\Logger;
+use Keelwatch\Webhook\WebhookHandler;
 
 final class Bootstrap
 {
@@ -35,12 +36,8 @@ final class Bootstrap
 
     public static function app(Config $config, Logger $logger): App
     {
-        $health = new HealthService(
-            $config,
-            static fn () => Connection::open($config),
-            self::MIGRATIONS,
-            $logger,
-        );
-        return new App($config, $health, $logger);
+        $connect = static fn () => Connection::open($config);
+        $health = new HealthService($config, $connect, self::MIGRATIONS, $logger);
+        return new App($config, $health, $logger, new WebhookHandler($config, $connect));
     }
 }
