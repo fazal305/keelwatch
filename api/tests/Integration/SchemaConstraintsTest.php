@@ -89,17 +89,17 @@ final class SchemaConstraintsTest extends DatabaseTestCase
     public function testRunNeedsSaneBudgetAndAReasonWhenItFails(): void
     {
         $repo = $this->repository();
-        $this->assertRejected(fn () => $this->run($repo, 'r1', "budget_ms = 500"));
-        $this->assertRejected(fn () => $this->run($repo, 'r2', "status = 'failed'"));
-        $this->assertRejected(fn () => $this->run($repo, 'r3', "status = 'checkpointed'"));
-        self::assertSame(1, $this->run($repo, 'r4', "status = 'failed', failure_reason = 'budget_exhausted:llm_reasoning'"));
-        $this->assertRejected(fn () => $this->run($repo, 'r4', ''), '23000');
+        $this->assertRejected(fn () => $this->insertRun($repo, 'r1', "budget_ms = 500"));
+        $this->assertRejected(fn () => $this->insertRun($repo, 'r2', "status = 'failed'"));
+        $this->assertRejected(fn () => $this->insertRun($repo, 'r3', "status = 'checkpointed'"));
+        self::assertSame(1, $this->insertRun($repo, 'r4', "status = 'failed', failure_reason = 'budget_exhausted:llm_reasoning'"));
+        $this->assertRejected(fn () => $this->insertRun($repo, 'r4', ''), '23000');
     }
 
     public function testFindingProvenanceAndShapeRules(): void
     {
         $repo = $this->repository();
-        $this->run($repo, 'rf', '');
+        $this->insertRun($repo, 'rf', '');
         $run = (int) $this->pdo->lastInsertId();
 
         $this->assertRejected(fn () => $this->finding($run, $repo, "source = 'llm', provider = 'groq'"));
@@ -130,7 +130,7 @@ final class SchemaConstraintsTest extends DatabaseTestCase
     public function testDeletingARunCascadesButRepositoriesWithHistoryAreProtected(): void
     {
         $repo = $this->repository();
-        $this->run($repo, 'rc', '');
+        $this->insertRun($repo, 'rc', '');
         $run = (int) $this->pdo->lastInsertId();
         $this->pdo->exec("INSERT INTO analysis_checkpoints (run_id, phase, status) VALUES ({$run}, 'extraction', 'completed')");
         $this->finding($run, $repo, "source = 'osv'");
@@ -220,7 +220,7 @@ final class SchemaConstraintsTest extends DatabaseTestCase
         return $this->pdo->exec("UPDATE jobs SET {$overrides} WHERE id = {$id}");
     }
 
-    private function run(int $repo, string $key, string $overrides): int
+    private function insertRun(int $repo, string $key, string $overrides): int
     {
         return $this->insertSet('analysis_runs', [
             'repository_id' => (string) $repo,

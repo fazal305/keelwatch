@@ -31,3 +31,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+db/local-setup.cmd
+db/local-*
+.worker.pid

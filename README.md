@@ -71,7 +71,8 @@ cd web && npm run lint && npm test && npm run test:e2e
 ```
 
 Integration tests use the database named by `DB_TEST_NAME` and drop its
-tables. Browser tests mock the API and check for horizontal overflow at
+tables. The PHP integration suite leaves that database reset, so run
+`php api/bin/migrate.php --test` before the worker integration tests. Browser tests mock the API and check for horizontal overflow at
 375, 390, 768, 1024, 1280 and 1440 px.
 
 ## License

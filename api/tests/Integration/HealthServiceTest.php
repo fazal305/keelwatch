@@ -24,13 +24,21 @@ final class HealthServiceTest extends DatabaseTestCase
         );
     }
 
-    public function testPendingMigrationsDegradeTheDatabaseButKeepItReachable(): void
+    public function testPendingMigrationsDegradeTheDatabaseAndBlockReadiness(): void
     {
         $report = $this->health->report();
         $database = $this->component($report, 'database');
 
         self::assertSame('degraded', $database['status']);
         self::assertSame(count(glob(Bootstrap::MIGRATIONS . '/*.sql') ?: []), $database['pending_migrations']);
+
+        // An API on an out-of-date schema must not receive traffic.
+        self::assertSame(
+            ['ready' => false, 'checks' => ['database' => 'degraded']],
+            $this->health->readiness(),
+        );
+
+        (new Migrator($this->pdo, Bootstrap::MIGRATIONS))->migrate();
         self::assertTrue($this->health->readiness()['ready']);
     }
 
@@ -58,7 +66,8 @@ final class HealthServiceTest extends DatabaseTestCase
 
         self::assertSame('ok', $report['status']);
         self::assertSame('ok', $workers['status']);
-        self::assertSame(['fresh' => 'running', 'done' => 'stopped', 'old' => 'stale'], $byId);
+        // Most recently seen first.
+        self::assertSame(['fresh' => 'running', 'old' => 'stale', 'done' => 'stopped'], $byId);
         self::assertSame('1 worker(s) running.', $workers['summary']);
 
         $this->pdo->exec("UPDATE worker_heartbeats SET last_seen_at = UTC_TIMESTAMP(3) - INTERVAL 5 MINUTE WHERE worker_id = 'fresh'");
