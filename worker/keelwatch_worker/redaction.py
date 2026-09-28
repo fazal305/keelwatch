@@ -37,6 +37,10 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("email", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")),
 )
 
+# Credential formats only (no emails): shared with the secrets scanner so
+# detection and masking can never disagree.
+CREDENTIAL_PATTERNS = tuple((kind, p) for kind, p in _PATTERNS if kind != "email")
+
 # key = "value" / key: 'value' / KEY=value where the key names a secret.
 _ASSIGNMENT = re.compile(
     r"""(?ix)
@@ -84,3 +88,12 @@ def redact(text: str) -> Redacted:
 
     text = _ASSIGNMENT.sub(assignment, text)
     return Redacted(text, findings)
+
+
+def has_assigned_secret(text: str) -> bool:
+    """True if the text assigns a real-looking value to a secret-named key."""
+    for m in _ASSIGNMENT.finditer(text):
+        value = m.group("value")
+        if not value.startswith("[REDACTED:") and not _PLACEHOLDER.match(value):
+            return True
+    return False

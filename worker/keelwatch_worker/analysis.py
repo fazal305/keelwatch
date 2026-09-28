@@ -176,8 +176,25 @@ def llm_review(ctx: RunContext, budget: Budget) -> dict[str, Any]:
     }
 
 
+def _code_intelligence_phases() -> list[Phase]:
+    # Imported here: intel.phases depends on this module's neighbours.
+    from .intel import phases as intel
+
+    return [
+        Phase("extract_changes", 30_000, intel.extract_changes),
+        Phase("secrets", 5_000, intel.secrets_phase),
+        Phase("dependencies", 30_000, intel.dependencies_phase),
+        Phase("structure", 2_000, intel.structure_phase),
+        Phase("context", 2_000, intel.context_phase),
+        Phase("llm_review", 60_000, llm_review),
+        Phase("normalize_findings", 5_000, intel.normalize_findings),
+    ]
+
+
+# Order matters: later phases read earlier phases' checkpoint state.
 PRODUCTION_PHASES: list[Phase] = [
     Phase("load_event", 5_000, load_event),
+    *_code_intelligence_phases(),
 ]
 
 
@@ -192,6 +209,8 @@ def handle_analysis_run(
     engine: PipelineEngine,
     router: Router | None,
     logger: Logger,
+    github: Any = None,
+    osv: Any = None,
 ) -> dict[str, Any]:
     payload = validate_analysis_job(job.payload)
     with conn.cursor() as cur:
@@ -208,6 +227,8 @@ def handle_analysis_run(
         payload["budget_ms"],
         logger.with_correlation_id(payload["correlation_id"]),
         router=router,
+        github=github,
+        osv=osv,
         keep_lease=keep_lease,
     )
     return {

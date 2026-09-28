@@ -94,6 +94,26 @@ php scripts/send-webhook.php push --bad-signature
 php scripts/send-webhook.php push --repeat=200
 ```
 
+## Analysis pipeline
+
+Each analysis run executes these phases in order. Every phase has a time
+cap, commits a checkpoint, and is skipped on resume once it has completed.
+
+| Phase | What it does |
+| --- | --- |
+| `load_event` | Loads the triggering event and repository |
+| `extract_changes` | Fetches changed files and patches from GitHub (no clone); masks secrets and emails before anything is stored |
+| `secrets` | Credentials, sensitive files and insecure patterns in *added* lines, with file and line |
+| `dependencies` | Diffs `package.json`, `composer.json`, `requirements*.txt`; flags URL/git sources, unbounded ranges, downgrades; checks exact versions against OSV.dev |
+| `structure` | Change size, spread and test changes (heuristics, marked low confidence) |
+| `context` | Bounded, redacted diff text for optional LLM review |
+| `llm_review` | Optional; only when a provider is configured and the repository's privacy policy allows it |
+| `normalize_findings` | Stores findings (`contracts/finding.v1.json`) with stable fingerprints |
+
+Findings are signals with a stated confidence, not verdicts. Rate limits or
+outages at GitHub checkpoint the run and retry it; an OSV outage is recorded
+as a gap, never as "no vulnerabilities".
+
 ## Tests
 
 ```bash

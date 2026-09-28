@@ -40,6 +40,12 @@ class PhaseSkipped(Exception):
     """The phase does not apply to this run (e.g. no LLM configured)."""
 
 
+class RetryLater(Exception):
+    """A dependency is temporarily unavailable (rate limit, outage). The run is
+    checkpointed and the exception propagates so the job queue retries it;
+    the retry resumes from this phase."""
+
+
 @dataclass
 class RunContext:
     conn: Connection
@@ -49,6 +55,8 @@ class RunContext:
     state: dict[str, dict[str, Any]]
     logger: Logger
     router: Router | None = None
+    github: Any = None  # GitHubClient; typed loosely to keep the engine import-light
+    osv: Any = None  # OsvClient
     record_call: Callable[[CallRecord], None] = field(default=lambda _r: None)
 
 
@@ -90,6 +98,8 @@ class PipelineEngine:
         logger: Logger,
         *,
         router: Router | None = None,
+        github: Any = None,
+        osv: Any = None,
         keep_lease: Callable[[], None] = lambda: None,
     ) -> RunResult:
         loaded = self._load(conn, run_id)
@@ -115,7 +125,7 @@ class PipelineEngine:
 
         done, attempts = self._checkpoints(conn, run_id)
         state = dict(done)
-        ctx = RunContext(conn, run, repository, envelope, state, logger, router)
+        ctx = RunContext(conn, run, repository, envelope, state, logger, router, github, osv)
         ran: list[str] = []
 
         for phase in self.phases:
@@ -149,6 +159,10 @@ class PipelineEngine:
                 return self._finish(
                     conn, run_id, "failed", f"{phase.name}: {exc}"[:1000], ran, done
                 )
+            except RetryLater as exc:
+                self._fail_checkpoint(conn, checkpoint_id, started, f"retry later: {exc}")
+                self._finish(conn, run_id, "checkpointed", f"retry_later:{phase.name}", ran, done)
+                raise
             except pymysql.err.Error:
                 raise  # infrastructure: let the job retry and resume
             except Exception as exc:

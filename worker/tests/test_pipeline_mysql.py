@@ -355,10 +355,13 @@ def test_worker_turns_an_event_into_a_completed_run(settings, conn):
 
     run = rows(conn, "SELECT status, failure_reason, finished_at FROM analysis_runs")[0]
     assert run["status"] == "completed", run
-    assert [p.name for p in PRODUCTION_PHASES] == ["load_event"]
-    assert checkpoints(conn, scalar(conn, "SELECT id FROM analysis_runs")) == [
-        ("load_event", 1, "completed")
-    ]
+    # No GitHub client was given, so extraction and everything that needs its
+    # output is skipped (not failed), and the run still completes.
+    recorded = checkpoints(conn, scalar(conn, "SELECT id FROM analysis_runs"))
+    assert [p for p, _, _ in recorded] == [p.name for p in PRODUCTION_PHASES]
+    assert recorded[0] == ("load_event", 1, "completed")
+    assert ("extract_changes", 1, "skipped") in recorded
+    assert recorded[-1] == ("normalize_findings", 1, "completed")
     assert scalar(conn, "SELECT COUNT(*) FROM jobs WHERE status <> 'succeeded'") == 0
 
 

@@ -25,6 +25,7 @@ from .config import ConfigError, Settings, load_settings
 from .db import connect
 from .events import handle_github_event
 from .heartbeat import HeartbeatLoop, MySqlHeartbeatStore
+from .integrations import IntegrationConfigError, build_github, build_osv
 from .llm.config import LLMConfigError, build_providers
 from .llm.router import Router
 from .logs import Logger
@@ -72,7 +73,9 @@ def build_router(settings: Settings) -> Router:
     )
 
 
-def build_handlers(settings: Settings, logger: Logger, router: Router) -> dict:
+def build_handlers(
+    settings: Settings, logger: Logger, router: Router, github=None, osv=None
+) -> dict:
     engine = PipelineEngine(PRODUCTION_PHASES, reserve_ms=settings.phase_reserve_ms)
     return {
         "github_event": lambda conn, job: handle_github_event(
@@ -80,7 +83,14 @@ def build_handlers(settings: Settings, logger: Logger, router: Router) -> dict:
         ),
         "analysis_run": SelfManaged(
             lambda conn, job, keep_lease: handle_analysis_run(
-                conn, job, keep_lease, engine=engine, router=router, logger=logger
+                conn,
+                job,
+                keep_lease,
+                engine=engine,
+                router=router,
+                logger=logger,
+                github=github,
+                osv=osv,
             )
         ),
     }
@@ -113,7 +123,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         settings = load_settings(os.environ)
         router = build_router(settings)
-    except (ConfigError, LLMConfigError) as exc:
+        github = build_github(os.environ)
+        osv = build_osv(os.environ)
+    except (ConfigError, LLMConfigError, IntegrationConfigError) as exc:
         logger.error("configuration invalid", errors=exc.errors)
         return 1
 
@@ -131,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
         environment=settings.app_env,
         llm_providers=[f"{p.name}:{p.model}" for p in router.providers],
         phases=[p.name for p in PRODUCTION_PHASES],
+        github_auth=type(github.auth).__name__,
+        osv_enabled=osv is not None,
     )
 
     store = MySqlHeartbeatStore(settings)
@@ -147,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
         logger,
         stop,
         queues=("events", "analysis"),
-        handlers=build_handlers(settings, logger, router),
+        handlers=build_handlers(settings, logger, router, github, osv),
     )
     try:
         # The current job finishes before shutdown; analysis runs stop at a checkpoint.
