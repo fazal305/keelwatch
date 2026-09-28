@@ -395,3 +395,55 @@ def test_long_analysis_keeps_extending_its_lease(settings, conn, monkeypatch):
 
     assert ran.is_set(), "the test phase must actually run, or this test proves nothing"
     assert extended.is_set(), "the lease was refreshed right before the phase ran"
+
+
+# ----- cancellation ---------------------------------------------------------------------
+
+
+def _cancel(ctx, budget):
+    """A phase that simulates an admin cancelling the run while it executes."""
+    with ctx.conn.cursor() as cur:
+        cur.execute("UPDATE analysis_runs SET status = 'cancelled' WHERE id = %s", (ctx.run["id"],))
+    return {}
+
+
+def test_cancelling_mid_run_stops_before_the_next_phase(conn):
+    run_id = seed_run(conn)
+    rec = Recorder(FakeClock())
+    engine = PipelineEngine(
+        [Phase("cancel_here", 5000, _cancel), rec.phase("never_runs")],
+        reserve_ms=0,
+        clock=rec.clock,
+    )
+
+    result = engine.execute(conn, run_id, 10_000, LOG)
+
+    assert result.status == "cancelled"
+    assert "never_runs" not in rec.calls
+    assert run_row(conn, run_id)["status"] == "cancelled"
+
+
+def test_cancelling_during_the_last_phase_is_not_overwritten(conn):
+    run_id = seed_run(conn)
+    engine = PipelineEngine([Phase("cancel_here", 5000, _cancel)], reserve_ms=0)
+
+    result = engine.execute(conn, run_id, 10_000, LOG)
+
+    assert result.status == "cancelled"
+    assert run_row(conn, run_id)["status"] == "cancelled", (
+        "completion must not overwrite a cancellation"
+    )
+
+
+def test_a_cancelled_run_is_never_started(conn):
+    run_id = seed_run(conn)
+    with conn.cursor() as cur:
+        cur.execute("UPDATE analysis_runs SET status = 'cancelled' WHERE id = %s", (run_id,))
+    rec = Recorder(FakeClock())
+
+    result = PipelineEngine([rec.phase("a")], reserve_ms=0, clock=rec.clock).execute(
+        conn, run_id, 10_000, LOG
+    )
+
+    assert result.status == "skipped"
+    assert rec.calls == {}

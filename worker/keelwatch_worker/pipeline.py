@@ -110,18 +110,21 @@ class PipelineEngine:
             return RunResult("skipped", f"run is already {run['status']}")
 
         budget = Budget(budget_ms, reserve_ms=self._reserve_ms, clock=self._clock)
-        self._exec(
-            conn,
-            """
-            UPDATE analysis_runs
-            SET status = 'running', failure_reason = NULL, current_phase = NULL,
-                started_at = COALESCE(started_at, UTC_TIMESTAMP(3)),
-                deadline_at = UTC_TIMESTAMP(3) + INTERVAL %s MICROSECOND,
-                updated_at = UTC_TIMESTAMP(3)
-            WHERE id = %s
-            """,
-            (budget_ms * 1000, run_id),
-        )
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE analysis_runs
+                SET status = 'running', failure_reason = NULL, current_phase = NULL,
+                    started_at = COALESCE(started_at, UTC_TIMESTAMP(3)),
+                    deadline_at = UTC_TIMESTAMP(3) + INTERVAL %s MICROSECOND,
+                    updated_at = UTC_TIMESTAMP(3)
+                WHERE id = %s AND status NOT IN ('completed', 'cancelled')
+                """,
+                (budget_ms * 1000, run_id),
+            )
+            if cur.rowcount == 0:
+                # Cancelled (or finished) between loading and starting.
+                return RunResult("skipped", "run was cancelled or already finished")
 
         done, attempts = self._checkpoints(conn, run_id)
         state = dict(done)
@@ -132,6 +135,9 @@ class PipelineEngine:
             if phase.name in done:
                 continue
             keep_lease()
+            if self._cancelled(conn, run_id):
+                logger.info("run cancelled; stopping before phase", run_id=run_id, phase=phase.name)
+                return RunResult("cancelled", "cancelled by a user", tuple(ran), tuple(done))
 
             attempt = attempts.get(phase.name, 0) + 1
             try:
@@ -290,20 +296,30 @@ class PipelineEngine:
         )
 
     def _finish(self, conn, run_id, status, reason, ran, resumed) -> RunResult:
-        self._exec(
-            conn,
-            """
-            UPDATE analysis_runs
-            SET status = %s, failure_reason = %s,
-                current_phase = CASE WHEN %s = 'completed' THEN NULL ELSE current_phase END,
-                finished_at = CASE WHEN %s IN ('completed', 'failed')
-                                   THEN UTC_TIMESTAMP(3) ELSE NULL END,
-                updated_at = UTC_TIMESTAMP(3)
-            WHERE id = %s
-            """,
-            (status, reason, status, status, run_id),
-        )
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE analysis_runs
+                SET status = %s, failure_reason = %s,
+                    current_phase = CASE WHEN %s = 'completed' THEN NULL ELSE current_phase END,
+                    finished_at = CASE WHEN %s IN ('completed', 'failed')
+                                       THEN UTC_TIMESTAMP(3) ELSE NULL END,
+                    updated_at = UTC_TIMESTAMP(3)
+                WHERE id = %s AND status <> 'cancelled'
+                """,
+                (status, reason, status, status, run_id),
+            )
+            if cur.rowcount == 0:
+                # A user cancelled it during the last phase: cancellation wins.
+                return RunResult("cancelled", "cancelled by a user", tuple(ran), tuple(resumed))
         return RunResult(status, reason, tuple(ran), tuple(resumed))
+
+    @staticmethod
+    def _cancelled(conn: Connection, run_id: int) -> bool:
+        with conn.cursor() as cur:
+            cur.execute("SELECT status FROM analysis_runs WHERE id = %s", (run_id,))
+            row = cur.fetchone()
+        return row is not None and row["status"] == "cancelled"
 
     def _recorder(self, conn: Connection, run_id: int, phase: str) -> Callable[[CallRecord], None]:
         def record(call: CallRecord) -> None:

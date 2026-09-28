@@ -6,6 +6,7 @@ namespace Keelwatch;
 
 use ErrorException;
 use Keelwatch\Auth\AuthService;
+use Keelwatch\Dashboard\DashboardRoutes;
 use Keelwatch\Database\Connection;
 use Keelwatch\Health\HealthService;
 use Keelwatch\Support\Env;
@@ -49,6 +50,7 @@ final class Bootstrap
             $logger,
             new WebhookHandler($config, $connect),
             new AuthService($config, $connect),
+            new DashboardRoutes($connect, $logger),
         );
     }
 }
