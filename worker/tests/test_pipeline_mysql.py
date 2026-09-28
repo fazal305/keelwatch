@@ -361,15 +361,18 @@ def test_worker_turns_an_event_into_a_completed_run(settings, conn):
     assert [p for p, _, _ in recorded] == [p.name for p in PRODUCTION_PHASES]
     assert recorded[0] == ("load_event", 1, "completed")
     assert ("extract_changes", 1, "skipped") in recorded
-    assert recorded[-1] == ("normalize_findings", 1, "completed")
+    assert ("normalize_findings", 1, "completed") in recorded
+    assert recorded[-1] == ("digest", 1, "completed")
     assert scalar(conn, "SELECT COUNT(*) FROM jobs WHERE status <> 'succeeded'") == 0
 
 
-def test_long_analysis_keeps_extending_its_lease(settings, conn):
+def test_long_analysis_keeps_extending_its_lease(settings, conn, monkeypatch):
     seed_event(conn)
     extended = threading.Event()
+    ran = threading.Event()
 
     def slow_phase(ctx, budget):
+        ran.set()
         with ctx.conn.cursor() as cur:
             cur.execute(
                 "SELECT TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), locked_until) AS left_s "
@@ -379,16 +382,16 @@ def test_long_analysis_keeps_extending_its_lease(settings, conn):
                 extended.set()
         return {}
 
-    import keelwatch_worker.analysis as analysis_module
+    # Swap the worker's pipeline for one slow phase, at the point main.py builds it.
+    import keelwatch_worker.main as main_module
 
-    original = list(analysis_module.PRODUCTION_PHASES)
-    analysis_module.PRODUCTION_PHASES[:] = [Phase("slow", 5000, slow_phase)]
-    try:
-        handlers = build_handlers(settings, LOG, Router([]))
-        r = runner(settings, handlers=handlers, queues=("events", "analysis"))
-        r.run_once()
-        r.run_once()
-    finally:
-        analysis_module.PRODUCTION_PHASES[:] = original
+    monkeypatch.setattr(
+        main_module, "production_phases", lambda _config=None: [Phase("slow", 5000, slow_phase)]
+    )
+    handlers = build_handlers(settings, LOG, Router([]))
+    r = runner(settings, handlers=handlers, queues=("events", "analysis"))
+    r.run_once()
+    r.run_once()
 
+    assert ran.is_set(), "the test phase must actually run, or this test proves nothing"
     assert extended.is_set(), "the lease was refreshed right before the phase ran"

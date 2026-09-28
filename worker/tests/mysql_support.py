@@ -21,6 +21,10 @@ from keelwatch_worker.runner import JobRunner
 ROOT = Path(__file__).resolve().parents[2]
 ENVELOPES = ROOT / "contracts" / "fixtures" / "github-event" / "valid"
 TABLES_IN_DELETE_ORDER = (
+    "notification_deliveries",
+    "notification_destinations",
+    "digest_runs",
+    "digests",
     "jobs",
     "analysis_findings",
     "analysis_checkpoints",

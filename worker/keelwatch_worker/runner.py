@@ -49,7 +49,9 @@ class JobRunner:
         queues: tuple[str, ...] = ("events",),
         handlers: dict[str, Handler | SelfManaged] | None = None,
         rng: random.Random | None = None,
+        scheduler: Any = None,  # anything with tick(conn) -> int, e.g. DailyDigestScheduler
     ) -> None:
+        self._scheduler = scheduler
         self._connect = connect
         self._settings = settings
         self._logger = logger
@@ -96,6 +98,11 @@ class JobRunner:
             if recovered["requeued"] or recovered["dead"]:
                 self._logger.warning("recovered expired job leases", **recovered)
 
+        if self._scheduler is not None:
+            queued = self._scheduler.tick(self._conn)
+            if queued:
+                self._logger.info("scheduled jobs queued", count=queued)
+
         for name in self._queues:
             job = queue.claim(name)
             if job is not None:
@@ -141,7 +148,8 @@ class JobRunner:
             type=job.type,
             attempt=job.attempts,
             duration_ms=round((time.perf_counter() - started) * 1000, 1),
-            **result,
+            # Nested, so a handler's keys can never collide with the runner's own.
+            result=result,
         )
 
     def _record_failure(self, queue: JobQueue, job: Job, exc: Exception, log: Logger) -> None:

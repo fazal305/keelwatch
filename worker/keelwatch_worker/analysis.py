@@ -191,11 +191,22 @@ def _code_intelligence_phases() -> list[Phase]:
     ]
 
 
-# Order matters: later phases read earlier phases' checkpoint state.
-PRODUCTION_PHASES: list[Phase] = [
-    Phase("load_event", 5_000, load_event),
-    *_code_intelligence_phases(),
-]
+def production_phases(notifications=None) -> list[Phase]:
+    """The pipeline, in order: later phases read earlier phases' checkpoint
+    state. `notifications` is a NotificationConfig; None means digests are
+    stored but no notifications are queued."""
+    from .notify.jobs import NotificationConfig, make_digest_phase
+
+    config = notifications or NotificationConfig(key=None, dashboard_url=None)
+    return [
+        Phase("load_event", 5_000, load_event),
+        *_code_intelligence_phases(),
+        Phase("digest", 5_000, make_digest_phase(config)),
+    ]
+
+
+# Default pipeline (notifications off); main.py builds one with its config.
+PRODUCTION_PHASES: list[Phase] = production_phases()
 
 
 # ----- job handler and resume ------------------------------------------------------

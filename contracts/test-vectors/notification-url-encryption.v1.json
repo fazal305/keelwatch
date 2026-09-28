@@ -1,0 +1,8 @@
+{
+  "description": "AES-256-GCM layout for notification destination URLs: 0x01 || nonce(12) || ciphertext || tag(16). TEST-ONLY key and nonce; never use them for real data.",
+  "aad": "keelwatch:notification-url:v1",
+  "key_base64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  "nonce_hex": "000102030405060708090a0b",
+  "plaintext": "keelwatch test vector: not a real webhook",
+  "blob_hex": "01000102030405060708090a0b2c67b377b284b678e561e3eec29d581be6b5f35b82417f125713c5e43d1b65d36d30d999cda97df71f1d6e4b809981be1e941b4366bc2ce235"
+}

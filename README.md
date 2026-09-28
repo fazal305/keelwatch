@@ -114,6 +114,31 @@ Findings are signals with a stated confidence, not verdicts. Rate limits or
 outages at GitHub checkpoint the run and retry it; an OSV outage is recorded
 as a gap, never as "no vulnerabilities".
 
+## Digests and notifications
+
+Every analysis run ends with a `digest` phase that stores a summary: counts
+by severity, new vs recurring findings, the top findings, and a **gaps**
+list of anything that was not checked (so a quiet digest is never mistaken
+for a clean one). After `DIGEST_DAILY_HOUR_UTC`, the worker also stores one
+daily digest per installation for the previous UTC day.
+
+Notifications to Slack or Discord are optional and off until
+`NOTIFICATION_KEY` is set. Destinations are managed from the worker (the
+webhook URL is asked for at a hidden prompt and stored encrypted):
+
+```bash
+python -m keelwatch_worker destinations add --installation <github installation id> --kind slack --label team --min-severity high
+python -m keelwatch_worker destinations list
+python -m keelwatch_worker destinations disable <id>
+```
+
+Safety rules: only exact Slack/Discord webhook URLs that resolve to public
+addresses; no redirects; Discord messages can't ping anyone and Slack
+control sequences are escaped; messages never contain code or evidence,
+and for private repositories contain no repository name, paths or finding
+titles. Delivery is at-least-once: a crash between sending and recording
+the delivery can repeat a message.
+
 ## Tests
 
 ```bash

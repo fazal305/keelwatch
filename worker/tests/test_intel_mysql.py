@@ -140,6 +140,7 @@ def test_pull_request_produces_traceable_findings(conn):
         "context": "completed",
         "llm_review": "skipped",  # no LLM configured
         "normalize_findings": "completed",
+        "digest": "completed",
     }
 
     findings = rows(

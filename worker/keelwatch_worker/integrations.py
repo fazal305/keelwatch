@@ -9,11 +9,14 @@ private ones.
 from __future__ import annotations
 
 import os
+import urllib.parse
 from collections.abc import Mapping
 
 from .github.auth import AnonymousAuth, AppAuth
 from .github.client import GitHubClient
 from .intel.osv import OsvClient
+from .notify.crypto import InvalidKey, parse_key
+from .notify.jobs import NotificationConfig
 
 
 class IntegrationConfigError(Exception):
@@ -46,6 +49,49 @@ def build_github(env: Mapping[str, str]) -> GitHubClient:
             [f"could not load the GitHub App key: {type(exc).__name__}"]
         ) from exc
     return GitHubClient(auth, api_url=api_url)
+
+
+def build_notifications(env: Mapping[str, str]) -> NotificationConfig:
+    """NOTIFICATION_KEY unset means notifications are off; digests are still stored."""
+    errors: list[str] = []
+    raw_key = (env.get("NOTIFICATION_KEY") or "").strip()
+    key = None
+    if raw_key:
+        try:
+            key = parse_key(raw_key)
+        except InvalidKey as exc:
+            errors.append(str(exc))
+
+    dashboard = (env.get("DASHBOARD_URL") or "").strip().rstrip("/") or None
+    if dashboard is not None:
+        try:
+            parts = urllib.parse.urlsplit(dashboard)
+        except ValueError:
+            parts = None
+        local = (
+            parts is not None
+            and parts.scheme == "http"
+            and parts.hostname in ("localhost", "127.0.0.1")
+        )
+        if parts is None or not (parts.scheme == "https" or local) or parts.username or parts.query:
+            errors.append("DASHBOARD_URL must be an https:// URL (or http:// on localhost)")
+
+    def int_between(name: str, default: int, low: int, high: int) -> int:
+        raw = (env.get(name) or "").strip()
+        if not raw:
+            return default
+        if not raw.isdigit() or not low <= int(raw) <= high:
+            errors.append(f"{name} must be an integer between {low} and {high}")
+            return default
+        return int(raw)
+
+    hour = int_between("DIGEST_DAILY_HOUR_UTC", 6, 0, 23)
+    timeout = int_between("NOTIFY_TIMEOUT_S", 10, 1, 60)
+    if errors:
+        raise IntegrationConfigError(errors)
+    return NotificationConfig(
+        key=key, dashboard_url=dashboard, timeout_s=timeout, daily_hour_utc=hour
+    )
 
 
 def build_osv(env: Mapping[str, str]) -> OsvClient | None:
