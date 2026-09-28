@@ -17,7 +17,7 @@ describe('deriveHealth', () => {
   it('shows checking before the first response', () => {
     const d = deriveHealth(base);
     expect(d.overall).toBe('checking');
-    expect(d.components.map((c) => c.status)).toEqual(['checking', 'checking', 'checking']);
+    expect(d.components.map((c) => c.status)).toEqual(['checking', 'checking', 'checking', 'checking']);
   });
 
   it('passes a report through', () => {
@@ -40,7 +40,7 @@ describe('deriveHealth', () => {
       error: { kind: 'unreachable', message: 'The Keelwatch API is not reachable.' },
     });
     expect(d.overall).toBe('down');
-    expect(d.components.map((c) => c.status)).toEqual(['down', 'unknown', 'unknown']);
+    expect(d.components.map((c) => c.status)).toEqual(['down', 'unknown', 'unknown', 'unknown']);
   });
 
   it('reports unknown, not down, when the browser is offline', () => {

@@ -35,6 +35,7 @@ final class Config
         public readonly int $webhookMaxBodyBytes,
         public readonly int $webhookFailedAuthLimit,
         public readonly int $webhookFailedAuthWindowS,
+        public readonly int $queueLagWarnS,
     ) {
     }
 
@@ -121,6 +122,8 @@ final class Config
             webhookMaxBodyBytes: $positiveInt('WEBHOOK_MAX_BODY_BYTES', 5 * 1024 * 1024, 25 * 1024 * 1024),
             webhookFailedAuthLimit: $positiveInt('WEBHOOK_FAILED_AUTH_LIMIT', 20, 10000),
             webhookFailedAuthWindowS: $positiveInt('WEBHOOK_FAILED_AUTH_WINDOW_S', 300, 86400),
+            // A due job waiting longer than this marks the queue degraded.
+            queueLagWarnS: $positiveInt('QUEUE_LAG_WARN_S', 300, 86400),
         );
 
         if ($errors !== []) {

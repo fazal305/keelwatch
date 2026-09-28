@@ -33,9 +33,17 @@ class Settings:
     heartbeat_interval_s: int
     stale_after_s: int
     worker_id: str
+    job_lease_s: int = 60
+    poll_interval_s: int = 2
+    retry_base_s: int = 5
+    retry_max_s: int = 300
+    analysis_budget_ms: int = 120_000
 
     def with_database(self, name: str) -> Settings:
         return Settings(**{**self.__dict__, "db_name": name})
+
+    def with_overrides(self, **changes: object) -> Settings:
+        return Settings(**{**self.__dict__, **changes})
 
     def __repr__(self) -> str:  # never render the password, even in tracebacks
         return (
@@ -86,7 +94,17 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         heartbeat_interval_s=heartbeat,
         stale_after_s=stale_after,
         worker_id=worker_id,
+        job_lease_s=positive_int("JOB_LEASE_S", 60, 3600),
+        poll_interval_s=positive_int("WORKER_POLL_INTERVAL_S", 2, 60),
+        retry_base_s=positive_int("JOB_RETRY_BASE_S", 5, 3600),
+        retry_max_s=positive_int("JOB_RETRY_MAX_S", 300, 86400),
+        # Matches the analysis_runs CHECK constraint (1 s .. 1 h).
+        analysis_budget_ms=positive_int("ANALYSIS_BUDGET_MS", 120_000, 3_600_000),
     )
+    if settings.analysis_budget_ms < 1000:
+        errors.append("ANALYSIS_BUDGET_MS must be at least 1000")
+    if settings.retry_max_s < settings.retry_base_s:
+        errors.append("JOB_RETRY_MAX_S must be at least JOB_RETRY_BASE_S")
 
     if errors:
         raise ConfigError(errors)

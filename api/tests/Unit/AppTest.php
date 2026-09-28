@@ -62,8 +62,8 @@ final class AppTest extends TestCase
 
         self::assertSame(200, $response->status);
         self::assertSame('down', $report['status']);
-        self::assertSame(['api', 'database', 'workers'], array_column($report['components'], 'name'));
-        self::assertSame(['ok', 'down', 'unknown'], array_column($report['components'], 'status'));
+        self::assertSame(['api', 'database', 'workers', 'queue'], array_column($report['components'], 'name'));
+        self::assertSame(['ok', 'down', 'unknown', 'unknown'], array_column($report['components'], 'status'));
         self::assertStringNotContainsString('10.0.0.5', $response->body);
         self::assertStringNotContainsString('unit_user', $response->body);
         self::assertStringNotContainsString('SQLSTATE', $response->body);

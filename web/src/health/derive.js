@@ -2,7 +2,7 @@
  * Turns poller state into what the UI shows. Pure, so every combination of
  * report / error / offline is unit-testable.
  */
-const PROBED = ['api', 'database', 'workers'];
+const PROBED = ['api', 'database', 'workers', 'queue'];
 
 const UNREACHABLE_KINDS = new Set(['network', 'unreachable', 'timeout', 'http', 'parse']);
 

@@ -76,6 +76,39 @@ final class HealthServiceTest extends DatabaseTestCase
         self::assertSame('No worker is currently running.', $workers['summary']);
     }
 
+    public function testQueueReportsDepthLagAndDeadLetters(): void
+    {
+        (new Migrator($this->pdo, Bootstrap::MIGRATIONS))->migrate();
+
+        $queue = $this->component($this->health->report(), 'queue');
+        self::assertSame(['ok', 'No jobs yet.', []], [$queue['status'], $queue['summary'], $queue['queues']]);
+
+        $insert = function (string $key, string $queueName, string $extra = ''): void {
+            $this->pdo->exec(
+                "INSERT INTO jobs SET queue = '{$queueName}', type = 't', payload = '{}',
+                    idempotency_key = '{$key}', correlation_id = 'corr-00000001'{$extra}"
+            );
+        };
+        $insert('fresh', 'events');
+        $insert('retry-later', 'events', ', run_after = UTC_TIMESTAMP(3) + INTERVAL 1 HOUR');
+        $queue = $this->component($this->health->report(), 'queue');
+        self::assertSame('ok', $queue['status']);
+        self::assertSame(
+            ['name' => 'events', 'queued' => 2, 'due' => 1, 'running' => 0, 'dead' => 0],
+            array_diff_key($queue['queues'][0], ['oldest_due_age_s' => true]),
+        );
+        self::assertLessThan(5, $queue['queues'][0]['oldest_due_age_s'], 'a job delayed for retry is not lag');
+
+        $insert('old', 'analysis', ', run_after = UTC_TIMESTAMP(3) - INTERVAL 10 MINUTE');
+        $insert('dead', 'analysis', ", status = 'dead'");
+        $queue = $this->component($this->health->report(), 'queue');
+
+        self::assertSame('degraded', $queue['status']);
+        self::assertStringContainsString('1 dead-lettered job(s)', $queue['summary']);
+        self::assertStringContainsString('analysis queue lag over 300s', $queue['summary']);
+        self::assertGreaterThan(590, $queue['queues'][0]['oldest_due_age_s']);
+    }
+
     /**
      * @param array<string, mixed> $report
      * @return array<string, mixed>

@@ -118,6 +118,38 @@ describe('SystemHealth', () => {
     expect(within(card).getAllByText('—')).toHaveLength(2);
   });
 
+  it('shows queue depth and flags dead letters and lag', async () => {
+    const report = healthReport();
+    report.components.push({
+      name: 'queue',
+      status: 'degraded',
+      summary: '2 dead-lettered job(s) need attention; analysis queue lag over 300s.',
+      lag_warn_after_s: 300,
+      queues: [
+        { name: 'analysis', queued: 5, due: 5, running: 0, dead: 2, oldest_due_age_s: 720 },
+        { name: 'events', queued: 1, due: 0, running: 1, dead: 0, oldest_due_age_s: null },
+      ],
+    });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(report)));
+    renderPage();
+
+    const panel = await screen.findByRole('region', { name: 'Job queue: Degraded' });
+    expect(within(panel).getByText(/2 dead-lettered job/)).toBeInTheDocument();
+    const rows = within(within(panel).getByRole('table')).getAllByRole('row');
+    expect(within(rows[1]).getByText('analysis')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('waiting 12m')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('—')).toBeInTheDocument();
+  });
+
+  it('shows an empty queue as its own state, not as zero rows', async () => {
+    const report = healthReport();
+    report.components.push({ name: 'queue', status: 'ok', summary: 'No jobs yet.', lag_warn_after_s: 300, queues: [] });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(report)));
+    renderPage();
+
+    expect(await screen.findByText('No jobs yet')).toBeInTheDocument();
+  });
+
   it('renders API-supplied strings as text, never as HTML', async () => {
     const hostile = '<img src=x onerror="window.__pwned=1">';
     vi.stubGlobal(

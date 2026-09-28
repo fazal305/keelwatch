@@ -1,6 +1,7 @@
 """Worker entry point: ``python -m keelwatch_worker``.
 
-Phase 1 runs only the heartbeat loop. Job processing arrives in Phase 4.
+Runs the heartbeat loop in a background thread and the job loop (the
+'events' queue) in the main thread until SIGINT/SIGTERM/SIGBREAK.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from .config import ConfigError, Settings, load_settings
 from .db import connect
 from .heartbeat import HeartbeatLoop, MySqlHeartbeatStore
 from .logs import Logger
+from .runner import JobRunner
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -77,12 +79,23 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     store = MySqlHeartbeatStore(settings)
+    heartbeat = threading.Thread(
+        target=HeartbeatLoop(store, settings, logger, stop, pid=os.getpid()).run,
+        name="heartbeat",
+        daemon=True,
+    )
+    heartbeat.start()
+
+    runner = JobRunner(lambda: connect(settings), settings, logger, stop)
     try:
-        HeartbeatLoop(store, settings, logger, stop, pid=os.getpid()).run()
+        # The current job finishes before shutdown; nothing is abandoned mid-transaction.
+        runner.run()
     finally:
+        stop.set()
+        heartbeat.join(timeout=settings.heartbeat_interval_s + 5)
         store.close()
 
-    logger.info("worker stopped", worker_id=settings.worker_id)
+    logger.info("worker stopped", worker_id=settings.worker_id, jobs_processed=runner.processed)
     return 0
 
 

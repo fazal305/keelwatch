@@ -93,6 +93,56 @@ function WorkersTable({ workers, ageOffsetS, staleAfterS }) {
   );
 }
 
+function QueueTable({ queues, lagWarnS }) {
+  return (
+    <div className="table-scroll" role="region" aria-label="Job queues" tabIndex={0}>
+      <table className="table">
+        <thead>
+          <tr>
+            <th scope="col">Queue</th>
+            <th scope="col" className="num">Due now</th>
+            <th scope="col" className="num">Running</th>
+            <th scope="col" className="num">Dead</th>
+            <th scope="col">Oldest due job</th>
+            <th scope="col" className="col--secondary num">Queued total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {queues.map((q) => {
+            const lagging = q.oldest_due_age_s != null && q.oldest_due_age_s > lagWarnS;
+            return (
+              <tr key={q.name}>
+                <td>
+                  <code>{q.name}</code>
+                </td>
+                <td className="num">{q.due}</td>
+                <td className="num">{q.running}</td>
+                <td className="num">
+                  {q.dead > 0 ? <StatusIndicator status="degraded" label={String(q.dead)} /> : 0}
+                </td>
+                <td className="num">
+                  {q.oldest_due_age_s == null ? (
+                    '—'
+                  ) : lagging ? (
+                    <StatusIndicator status="degraded" label={`waiting ${formatAge(q.oldest_due_age_s).replace(' ago', '')}`} />
+                  ) : (
+                    `waiting ${formatAge(q.oldest_due_age_s).replace(' ago', '')}`
+                  )}
+                </td>
+                <td className="col--secondary num">{q.queued}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p className="table__note">
+        Lag is how long the oldest due job has waited; it is flagged after {lagWarnS}s. Jobs
+        delayed for a retry are not counted until they are due.
+      </p>
+    </div>
+  );
+}
+
 function LoadingSkeleton() {
   return (
     <div className="health-grid" aria-hidden="true">
@@ -219,6 +269,32 @@ export function SystemHealth() {
               </EmptyState>
             )}
           </Panel>
+
+          {byName.queue && (
+            <Panel
+              title="Job queue"
+              meta={<StatusIndicator status={byName.queue.status} />}
+              className="workers-panel"
+              aria-label={`Job queue: ${describeStatus(byName.queue.status).label}`}
+            >
+              {byName.queue.status === 'unknown' ? (
+                <EmptyState title="Queue status is unavailable">
+                  <p>{byName.queue.summary}</p>
+                </EmptyState>
+              ) : byName.queue.queues.length === 0 ? (
+                <EmptyState title="No jobs yet">
+                  <p>Jobs appear here once GitHub deliveries arrive.</p>
+                </EmptyState>
+              ) : (
+                <>
+                  {byName.queue.status !== 'ok' && (
+                    <p className="panel__alert">{byName.queue.summary}</p>
+                  )}
+                  <QueueTable queues={byName.queue.queues} lagWarnS={byName.queue.lag_warn_after_s} />
+                </>
+              )}
+            </Panel>
+          )}
 
           <p className="page__footnote num">
             Last checked {formatDateTime(report.checked_at)} (UTC source time, shown in your local

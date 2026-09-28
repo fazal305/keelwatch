@@ -24,4 +24,5 @@ export const COMPONENT_LABELS = {
   api: 'API',
   database: 'Database',
   workers: 'Workers',
+  queue: 'Queue',
 };

@@ -22,6 +22,16 @@ const REPORTS = {
           { id: 'host-2', status: 'stale', version: '0.1.0', started_at: '2026-09-27T10:00:00Z', last_seen_at: '2026-09-27T11:50:00Z', last_seen_age_s: 600 },
         ],
       },
+      {
+        name: 'queue',
+        status: 'degraded',
+        summary: '1 dead-lettered job(s) need attention; analysis queue lag over 300s.',
+        lag_warn_after_s: 300,
+        queues: [
+          { name: 'analysis', queued: 12, due: 12, running: 0, dead: 1, oldest_due_age_s: 4000 },
+          { name: 'events', queued: 0, due: 0, running: 1, dead: 0, oldest_due_age_s: null },
+        ],
+      },
     ],
   },
   noWorkers: {

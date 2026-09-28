@@ -54,13 +54,22 @@ final class HealthService
     public function report(): array
     {
         $database = $this->probeDatabase();
-        $workers = $database['pdo'] instanceof PDO
-            ? $this->probeWorkers($database['pdo'])
+        $pdo = $database['pdo'];
+        $workers = $pdo instanceof PDO
+            ? $this->probeWorkers($pdo)
             : [
                 'name' => 'workers',
                 'status' => self::UNKNOWN,
                 'summary' => 'Cannot read worker heartbeats while the database is unreachable.',
                 'workers' => [],
+            ];
+        $queue = $pdo instanceof PDO
+            ? $this->probeQueue($pdo)
+            : [
+                'name' => 'queue',
+                'status' => self::UNKNOWN,
+                'summary' => 'Cannot read the job queue while the database is unreachable.',
+                'queues' => [],
             ];
 
         unset($database['pdo']);
@@ -74,6 +83,7 @@ final class HealthService
             ],
             $database,
             $workers,
+            $queue,
         ];
 
         return [
@@ -207,6 +217,75 @@ final class HealthService
             'summary' => $summary,
             'stale_after_s' => $this->config->workerStaleAfterS,
             'workers' => $workers,
+        ];
+    }
+
+    /**
+     * Per-queue depth and lag. Lag is how long the oldest *due* job has been
+     * waiting (now - run_after), so jobs deliberately delayed for a retry
+     * don't count as lag until they are due.
+     *
+     * @return array<string, mixed>
+     */
+    private function probeQueue(PDO $pdo): array
+    {
+        try {
+            $rows = $pdo->query(
+                "SELECT queue,
+                        SUM(status = 'queued') AS queued,
+                        SUM(status = 'queued' AND run_after <= UTC_TIMESTAMP(3)) AS due,
+                        SUM(status = 'running') AS running,
+                        SUM(status = 'dead') AS dead,
+                        TIMESTAMPDIFF(MICROSECOND,
+                            MIN(CASE WHEN status = 'queued' AND run_after <= UTC_TIMESTAMP(3) THEN run_after END),
+                            UTC_TIMESTAMP(3)) / 1000000 AS oldest_due_age_s
+                 FROM jobs
+                 GROUP BY queue
+                 ORDER BY queue"
+            )->fetchAll();
+        } catch (Throwable $e) {
+            $this->logger->warning('queue probe failed', ['exception' => $e::class, 'code' => $e->getCode()]);
+            return [
+                'name' => 'queue',
+                'status' => self::UNKNOWN,
+                'summary' => 'The job queue could not be read.',
+                'queues' => [],
+            ];
+        }
+
+        $queues = [];
+        $dead = 0;
+        $lagging = [];
+        foreach ($rows as $row) {
+            $age = $row['oldest_due_age_s'] === null ? null : round(max(0.0, (float) $row['oldest_due_age_s']), 1);
+            $queues[] = [
+                'name' => (string) $row['queue'],
+                'queued' => (int) $row['queued'],
+                'due' => (int) $row['due'],
+                'running' => (int) $row['running'],
+                'dead' => (int) $row['dead'],
+                'oldest_due_age_s' => $age,
+            ];
+            $dead += (int) $row['dead'];
+            if ($age !== null && $age > $this->config->queueLagWarnS) {
+                $lagging[] = (string) $row['queue'];
+            }
+        }
+
+        $problems = [];
+        if ($dead > 0) {
+            $problems[] = sprintf('%d dead-lettered job(s) need attention', $dead);
+        }
+        if ($lagging !== []) {
+            $problems[] = sprintf('%s queue lag over %ds', implode(', ', $lagging), $this->config->queueLagWarnS);
+        }
+
+        return [
+            'name' => 'queue',
+            'status' => $problems === [] ? self::OK : self::DEGRADED,
+            'summary' => $problems === [] ? ($queues === [] ? 'No jobs yet.' : 'Jobs are flowing.') : ucfirst(implode('; ', $problems)) . '.',
+            'lag_warn_after_s' => $this->config->queueLagWarnS,
+            'queues' => $queues,
         ];
     }
 

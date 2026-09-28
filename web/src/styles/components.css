@@ -191,6 +191,15 @@
   padding: 0;
 }
 
+.panel__alert {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--warning-soft);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
 /* ----- Table ---------------------------------------------------------- */
 
 .table-scroll {
