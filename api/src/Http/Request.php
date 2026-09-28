@@ -53,6 +53,37 @@ final class Request
         return $this->headers[strtolower($name)] ?? null;
     }
 
+    public function cookie(string $name): ?string
+    {
+        foreach (explode(';', $this->header('cookie') ?? '') as $pair) {
+            [$key, $value] = array_pad(explode('=', trim($pair), 2), 2, null);
+            if ($key === $name && $value !== null) {
+                return rawurldecode($value);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Decoded JSON object body, or null if the body is not a JSON object.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function json(int $maxBytes = 65536): ?array
+    {
+        $raw = $this->rawBodyWithin($maxBytes);
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+        $data = json_decode($raw, true, 16);
+        return is_array($data) && !array_is_list($data) ? $data : null;
+    }
+
+    public function isUnsafeMethod(): bool
+    {
+        return !in_array($this->method, ['GET', 'HEAD', 'OPTIONS'], true);
+    }
+
     /**
      * The exact bytes sent by the client. Signature verification (Phase 3)
      * must run over these bytes, never over a re-encoded JSON value.

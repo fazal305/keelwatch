@@ -28,12 +28,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # A throwaway password for a container that lives only for this job.
-      - name: Generate database password
+      # Throwaway secrets for a container and a job that live only for this run.
+      - name: Generate job secrets
         run: |
           pw="$(openssl rand -hex 24)"
+          app="$(openssl rand -hex 32)"
           echo "::add-mask::$pw"
+          echo "::add-mask::$app"
           echo "DB_PASSWORD=$pw" >> "$GITHUB_ENV"
+          echo "APP_SECRET=$app" >> "$GITHUB_ENV"
 
       - name: Start MySQL 8.4
         run: |
@@ -75,11 +78,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate database password
+      - name: Generate job secrets
         run: |
           pw="$(openssl rand -hex 24)"
+          app="$(openssl rand -hex 32)"
           echo "::add-mask::$pw"
+          echo "::add-mask::$app"
           echo "DB_PASSWORD=$pw" >> "$GITHUB_ENV"
+          echo "APP_SECRET=$app" >> "$GITHUB_ENV"
 
       - name: Start MySQL 8.4
         run: |

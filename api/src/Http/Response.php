@@ -39,6 +39,29 @@ final class Response
         return new self(204);
     }
 
+    /**
+     * Session cookie: HttpOnly, SameSite=Strict, Path=/. In secure mode it
+     * uses the __Host- prefix, which browsers only accept over HTTPS with no
+     * Domain attribute, so it can't be set or overridden by a subdomain.
+     */
+    public function withSessionCookie(string $value, int $maxAgeSeconds, bool $secure): self
+    {
+        $name = $secure ? '__Host-kw_session' : 'kw_session';
+        $cookie = sprintf(
+            '%s=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Strict%s',
+            $name,
+            rawurlencode($value),
+            max(0, $maxAgeSeconds),
+            $secure ? '; Secure' : '',
+        );
+        return $this->withHeader('Set-Cookie', $cookie);
+    }
+
+    public static function sessionCookieName(bool $secure): string
+    {
+        return $secure ? '__Host-kw_session' : 'kw_session';
+    }
+
     public function withHeader(string $name, string $value): self
     {
         $clone = clone $this;

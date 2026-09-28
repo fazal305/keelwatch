@@ -36,7 +36,21 @@ final class Config
         public readonly int $webhookFailedAuthLimit,
         public readonly int $webhookFailedAuthWindowS,
         public readonly int $queueLagWarnS,
+        public readonly string $appSecret = '',
+        public readonly int $sessionIdleMinutes = 60,
+        public readonly int $sessionAbsoluteHours = 12,
+        public readonly bool $sessionCookieSecure = true,
     ) {
+    }
+
+    public function __debugInfo(): array
+    {
+        // Keep secrets out of var_dump/print_r output.
+        $values = get_object_vars($this);
+        foreach (['dbPassword', 'appSecret', 'webhookSecrets'] as $secret) {
+            $values[$secret] = '[REDACTED]';
+        }
+        return $values;
     }
 
     /**
@@ -106,6 +120,29 @@ final class Config
             $errors[] = 'GITHUB_WEBHOOK_SECRET is required in production';
         }
 
+        // Keys the HMACs used for login throttling. Required: without it the
+        // dashboard can't sign anyone in safely.
+        $appSecret = trim($env['APP_SECRET'] ?? '');
+        if (strlen($appSecret) < 32) {
+            $errors[] = 'APP_SECRET is required and must be at least 32 characters';
+        }
+
+        // Secure cookies need HTTPS; plain-HTTP local development can opt out.
+        $secureRaw = strtolower(trim($env['SESSION_COOKIE_SECURE'] ?? ''));
+        $sessionCookieSecure = match ($secureRaw) {
+            '' => $appEnv === 'production',
+            'true', '1', 'yes' => true,
+            'false', '0', 'no' => false,
+            default => null,
+        };
+        if ($sessionCookieSecure === null) {
+            $errors[] = 'SESSION_COOKIE_SECURE must be true or false';
+            $sessionCookieSecure = true;
+        }
+        if ($appEnv === 'production' && !$sessionCookieSecure) {
+            $errors[] = 'SESSION_COOKIE_SECURE cannot be false in production';
+        }
+
         $config = new self(
             appEnv: $appEnv,
             appVersion: trim($env['APP_VERSION'] ?? '') ?: '0.0.0',
@@ -124,6 +161,10 @@ final class Config
             webhookFailedAuthWindowS: $positiveInt('WEBHOOK_FAILED_AUTH_WINDOW_S', 300, 86400),
             // A due job waiting longer than this marks the queue degraded.
             queueLagWarnS: $positiveInt('QUEUE_LAG_WARN_S', 300, 86400),
+            appSecret: $appSecret,
+            sessionIdleMinutes: $positiveInt('SESSION_IDLE_MINUTES', 60, 24 * 60),
+            sessionAbsoluteHours: $positiveInt('SESSION_ABSOLUTE_HOURS', 12, 24 * 30),
+            sessionCookieSecure: $sessionCookieSecure,
         );
 
         if ($errors !== []) {

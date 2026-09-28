@@ -55,17 +55,14 @@ final class AppTest extends TestCase
         );
     }
 
-    public function testHealthReportDegradesWithoutLeakingConnectionDetails(): void
+    public function testProtectedRoutesFailClosedWhenSignInIsNotConfigured(): void
     {
+        // The detailed health report is for signed-in users; without an auth
+        // service the kernel refuses rather than serving it to anyone.
         $response = $this->app->handle(new Request('GET', '/api/system/health'));
-        $report = json_decode($response->body, true);
 
-        self::assertSame(200, $response->status);
-        self::assertSame('down', $report['status']);
-        self::assertSame(['api', 'database', 'workers', 'queue'], array_column($report['components'], 'name'));
-        self::assertSame(['ok', 'down', 'unknown', 'unknown'], array_column($report['components'], 'status'));
-        self::assertStringNotContainsString('10.0.0.5', $response->body);
-        self::assertStringNotContainsString('unit_user', $response->body);
+        self::assertSame(503, $response->status);
+        self::assertSame('auth_unavailable', json_decode($response->body, true)['error']['code']);
         self::assertStringNotContainsString('SQLSTATE', $response->body);
     }
 

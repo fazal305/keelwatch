@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keelwatch;
 
 use ErrorException;
+use Keelwatch\Auth\AuthService;
 use Keelwatch\Database\Connection;
 use Keelwatch\Health\HealthService;
 use Keelwatch\Support\Env;
@@ -36,8 +37,18 @@ final class Bootstrap
 
     public static function app(Config $config, Logger $logger): App
     {
-        $connect = static fn () => Connection::open($config);
+        // One connection per request, opened lazily and shared by every service.
+        $pdo = null;
+        $connect = static function () use (&$pdo, $config) {
+            return $pdo ??= Connection::open($config);
+        };
         $health = new HealthService($config, $connect, self::MIGRATIONS, $logger);
-        return new App($config, $health, $logger, new WebhookHandler($config, $connect));
+        return new App(
+            $config,
+            $health,
+            $logger,
+            new WebhookHandler($config, $connect),
+            new AuthService($config, $connect),
+        );
     }
 }

@@ -27,6 +27,7 @@ final class TestConfig
             'DB_USER' => 'unit_user',
             'DB_PASSWORD' => 'not-a-real-password-7f3a',
             'WORKER_STALE_AFTER_S' => '35',
+            'APP_SECRET' => 'unit-test-app-secret-not-used-anywhere-real',
         ], $overrides);
     }
 
