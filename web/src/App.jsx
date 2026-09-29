@@ -12,6 +12,7 @@ import { FindingDetail, Findings } from './pages/Findings.jsx';
 import { Integrations } from './pages/Integrations.jsx';
 import { NotFound } from './pages/NotFound.jsx';
 import { Overview } from './pages/Overview.jsx';
+import { Readiness, ReadinessDetail } from './pages/Readiness.jsx';
 import { Repositories, RepositoryDetail } from './pages/Repositories.jsx';
 import { RunDetail, Runs } from './pages/Runs.jsx';
 import { SignIn } from './pages/SignIn.jsx';
@@ -97,6 +98,8 @@ export function App() {
               </Suspense>
             }
           />
+          <Route path="readiness" element={<Readiness />} />
+          <Route path="readiness/:id" element={<ReadinessDetail />} />
           <Route path="integrations" element={<Integrations />} />
           <Route path="system" element={<SystemHealth />} />
           <Route path="account" element={<Account />} />

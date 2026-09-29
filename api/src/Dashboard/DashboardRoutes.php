@@ -117,6 +117,16 @@ final class DashboardRoutes
             return self::found($analytics->summary((int) ($q['days'] ?? 30), $q['repository_id'] ?? null), 'Repository');
         }, Router::VIEWER);
 
+        $router->get('/api/readiness', function (Request $r): Response {
+            $q = $this->params($r, ['installation_id' => 'id']);
+            if ($q instanceof Response) {
+                return $q;
+            }
+            return Response::json((new ReadinessRepository(($this->connect)()))->overview($q['installation_id'] ?? null));
+        }, Router::VIEWER);
+
+        $router->get('/api/readiness/repositories/{id}', fn (Request $r, array $p): Response => self::found((new ReadinessRepository(($this->connect)()))->repository($p['id']), 'Repository'), Router::VIEWER);
+
         $router->get('/api/digests/{id}', fn (Request $r, array $p): Response => self::found($repo()->digest($p['id']), 'Digest'), Router::VIEWER);
     }
 

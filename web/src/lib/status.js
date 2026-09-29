@@ -36,6 +36,11 @@ const STATES = {
   notify_sent: { tone: 'success', shape: 'circle', label: 'Sent' },
   notify_failed: { tone: 'danger', shape: 'square', label: 'Failed' },
   notify_skipped: { tone: 'neutral', shape: 'diamond', label: 'Skipped' },
+  // Readiness criteria: "below" is a signal, not an alarm, so it uses the
+  // warning tone rather than danger.
+  readiness_met: { tone: 'success', shape: 'circle', label: 'Meets' },
+  readiness_not_met: { tone: 'warning', shape: 'triangle', label: 'Below' },
+  readiness_insufficient: { tone: 'neutral', shape: 'diamond', label: 'Not enough data' },
 };
 
 export function describeStatus(status) {

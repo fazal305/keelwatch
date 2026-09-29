@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: '/events', label: 'Events', icon: 'events' },
   { to: '/digests', label: 'Digests', icon: 'digests' },
   { to: '/analytics', label: 'Analytics', icon: 'chart' },
+  { to: '/readiness', label: 'Readiness', icon: 'checklist' },
   { to: '/integrations', label: 'Integrations', icon: 'plug' },
   { to: '/system', label: 'System health', icon: 'pulse' },
 ];

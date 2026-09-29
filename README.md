@@ -165,6 +165,21 @@ severity and category. It is deliberately conservative:
 Every chart has a "Show as table" view with the same numbers. Chart colours
 were checked for colour-vision separation and contrast in both themes.
 
+## Readiness
+
+The **Readiness** page gives recruiters and engineering managers transparent
+signals per repository, grouped by the GitHub account that connected them.
+Each repository gets a checklist of seven criteria (recent and steady
+activity, tests changing with code, reviewable change size, no open serious
+findings, no exposed secrets, no known-vulnerable dependencies added). Each
+criterion is *meets*, *below* or *not enough data*, with the evidence, the
+rule and its limits shown alongside.
+
+There is deliberately **no combined score**, no ranking, and no profiling of
+individual commit authors: these are signals about repositories as Keelwatch
+observed them, not a measure of anyone's ability. The reasoning and the
+default thresholds are in `docs/adr/0004-readiness-signals.md`.
+
 ## Tests
 
 ```bash

@@ -229,6 +229,16 @@
   white-space: nowrap;
 }
 
+/* Row headers are data (a repository, a day), not column captions. */
+.table th[scope='row'] {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
 .table td {
   height: 40px;
   padding: var(--space-2) var(--space-4);
@@ -1189,4 +1199,147 @@ a.stat:hover {
 .bar-list__value {
   color: var(--text-primary);
   text-align: right;
+}
+
+/* ----- Readiness ---------------------------------------------------------- */
+
+.readiness-note {
+  margin-bottom: var(--space-4);
+}
+
+.prose-list {
+  margin: 0;
+  padding-left: var(--space-5, 1.25rem);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  max-width: 80ch;
+}
+
+.prose-list li + li {
+  margin-top: var(--space-1);
+}
+
+.readiness-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5, 1.25rem);
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.readiness-table th,
+.readiness-table td {
+  padding: var(--space-2) var(--space-3);
+}
+
+.readiness-table th[scope='col'] {
+  white-space: normal;
+  min-width: 5.5rem;
+  vertical-align: bottom;
+}
+
+.readiness-table th[scope='row'] {
+  min-width: 9rem;
+  max-width: 15rem;
+  font-weight: 400;
+  text-align: left;
+  white-space: normal; /* .table th is nowrap; long repository names must wrap */
+  overflow-wrap: anywhere;
+}
+
+.readiness-table td {
+  white-space: nowrap;
+}
+
+.criteria-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.criterion {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.criterion__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.criterion__title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.criterion__evidence {
+  margin: var(--space-2) 0 var(--space-3);
+  color: var(--text-primary);
+}
+
+.criterion__rule {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.readiness-cards {
+  display: none;
+  margin: 0;
+  /* The panel body has no padding (edge-to-edge tables), so the cards bring their own. */
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  list-style: none;
+}
+
+.readiness-card + .readiness-card {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.readiness-card__name {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.readiness-card__list {
+  margin: var(--space-3) 0 0;
+}
+
+.readiness-card__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.readiness-card__row dt {
+  color: var(--text-secondary);
+}
+
+.readiness-card__row dd {
+  margin: 0;
+}
+
+@media (max-width: 767.98px) {
+  .readiness-cards {
+    display: block;
+  }
+
+  .readiness-table-wrap {
+    display: none;
+  }
 }
