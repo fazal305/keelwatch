@@ -1,11 +1,40 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
+import { useAuth } from '../auth/AuthContext.js';
 import { Icon } from './Icon.jsx';
 import { StatusBar } from './StatusBar.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
 
 // Only pages that exist are listed. The nav grows as phases ship.
-const NAV_ITEMS = [{ to: '/system', label: 'System health', icon: 'pulse' }];
+const NAV_ITEMS = [
+  { to: '/', label: 'Overview', icon: 'overview', end: true },
+  { to: '/repositories', label: 'Repositories', icon: 'repo' },
+  { to: '/runs', label: 'Analysis runs', icon: 'runs' },
+  { to: '/findings', label: 'Findings', icon: 'findings' },
+  { to: '/events', label: 'Events', icon: 'events' },
+  { to: '/digests', label: 'Digests', icon: 'digests' },
+  { to: '/system', label: 'System health', icon: 'pulse' },
+];
+
+function UserMenu({ compact }) {
+  const { user, signOut } = useAuth();
+  if (!user) return null;
+  return (
+    <div className="rail__user">
+      <NavLink to="/account" className="rail__link" title={`${user.username} (${user.role})`}>
+        <Icon name="user" />
+        <span className="rail__label">
+          {user.username}
+          <span className="rail__role">{user.role}</span>
+        </span>
+      </NavLink>
+      <button type="button" className={compact ? 'icon-button' : 'button rail__signout'} onClick={signOut} aria-label="Sign out" title="Sign out">
+        <Icon name="signout" size={16} />
+        {!compact && <span>Sign out</span>}
+      </button>
+    </div>
+  );
+}
 
 const MOBILE_QUERY = '(max-width: 767.98px)';
 
@@ -35,6 +64,7 @@ function Brand() {
 
 export function AppShell() {
   const isMobile = useMediaQuery(MOBILE_QUERY);
+  const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1023.98px)');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const menuButtonRef = useRef(null);
   const navRef = useRef(null);
@@ -111,7 +141,7 @@ export function AppShell() {
         <ul className="rail__list">
           {NAV_ITEMS.map((item) => (
             <li key={item.to}>
-              <NavLink to={item.to} className="rail__link" title={item.label}>
+              <NavLink to={item.to} end={item.end} className="rail__link" title={item.label}>
                 <Icon name={item.icon} />
                 <span className="rail__label">{item.label}</span>
               </NavLink>
@@ -119,6 +149,7 @@ export function AppShell() {
           ))}
         </ul>
         <div className="rail__foot">
+          <UserMenu compact={isTablet} />
           <ThemeToggle showLabel={isMobile} />
         </div>
       </nav>

@@ -46,7 +46,17 @@ const REPORTS = {
   },
 };
 
+const SESSION = {
+  user: { id: 1, username: 'e2e-viewer', role: 'viewer' },
+  csrf_token: 'e2e-csrf-token',
+};
+
+const json = (route, status, body) =>
+  route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+
+/** Every page sits behind sign-in, so the shell tests start with a valid session. */
 async function mockHealth(page, scenario) {
+  await page.route('**/api/auth/session', (route) => json(route, 200, SESSION));
   await page.route('**/api/system/health', (route) => {
     if (scenario === 'unreachable') return route.fulfill({ status: 502, body: '' });
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(REPORTS[scenario]) });
@@ -105,7 +115,8 @@ test('mobile drawer opens, traps nothing behind it, and closes with Escape', asy
   await menu.click();
   await expect(nav).toBeVisible();
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByRole('link', { name: 'System health' })).toBeFocused();
+  // Focus lands on the first destination, not the drawer's Close button.
+  await expect(nav.getByRole('link', { name: 'Overview' })).toBeFocused();
 
   // Wait for the slide-in transition before measuring overflow.
   await page.waitForTimeout(250);

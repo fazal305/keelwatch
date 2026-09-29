@@ -34,3 +34,4 @@ Thumbs.db
 db/local-setup.cmd
 db/local-*
 .worker.pid
+.dev-credentials

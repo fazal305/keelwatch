@@ -5,6 +5,7 @@ import { StatusIndicator } from '../components/StatusIndicator.jsx';
 import { useHealth } from '../health/HealthContext.js';
 import { deriveHealth } from '../health/derive.js';
 import { formatAge, formatDateTime, formatMs, secondsSince } from '../lib/format.js';
+import { usePageTitle } from '../lib/pageHooks.js';
 import { describeStatus } from '../lib/status.js';
 import { useNow } from '../lib/useNow.js';
 
@@ -15,12 +16,6 @@ const OVERALL_SENTENCES = {
   unknown: 'Status is unknown while you are offline.',
   checking: 'Checking components…',
 };
-
-function usePageTitle(title) {
-  useEffect(() => {
-    document.title = `${title} · Keelwatch`;
-  }, [title]);
-}
 
 /** Skeleton appears only if loading takes longer than a blink. */
 function useDelayedFlag(active, delayMs = 300) {

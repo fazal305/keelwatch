@@ -16,7 +16,7 @@ export function NotFound() {
         Nothing is served at <code>{pathname}</code>.
       </p>
       <p>
-        <Link to="/system">Go to System health</Link>
+        <Link to="/">Go to the overview</Link>
       </p>
     </div>
   );

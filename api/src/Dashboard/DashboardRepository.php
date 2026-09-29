@@ -216,6 +216,7 @@ final class DashboardRepository
         $stmt = $this->pdo->prepare(
             "SELECT ar.id, ar.status, ar.trigger_type, ar.head_sha, ar.current_phase, ar.failure_reason,
                     ar.attempt, ar.budget_ms, ar.created_at, ar.started_at, ar.finished_at,
+                    TIMESTAMPDIFF(MICROSECOND, ar.started_at, ar.finished_at) DIV 1000 AS duration_ms,
                     ar.repository_id, r.full_name, r.is_private, e.type AS event_type, e.pr_number,
                     (SELECT COUNT(*) FROM analysis_findings f WHERE f.run_id = ar.id) AS findings
              FROM analysis_runs ar
@@ -233,8 +234,6 @@ final class DashboardRepository
      */
     private function runSummary(array $r): array
     {
-        $started = $r['started_at'] !== null ? strtotime($r['started_at'] . ' UTC') : null;
-        $finished = $r['finished_at'] !== null ? strtotime($r['finished_at'] . ' UTC') : null;
         return [
             'id' => (int) $r['id'],
             'status' => $r['status'],
@@ -251,7 +250,8 @@ final class DashboardRepository
             'created_at' => self::iso($r['created_at']),
             'started_at' => self::iso($r['started_at']),
             'finished_at' => self::iso($r['finished_at']),
-            'duration_ms' => $started !== null && $finished !== null ? max(0, ($finished - $started) * 1000) : null,
+            // Computed by MySQL from the DATETIME(3) columns, so milliseconds are kept.
+            'duration_ms' => $r['duration_ms'] !== null ? max(0, (int) $r['duration_ms']) : null,
         ];
     }
 
@@ -262,6 +262,7 @@ final class DashboardRepository
     {
         $stmt = $this->pdo->prepare(
             "SELECT ar.*, r.full_name, r.is_private, e.type AS event_type, e.pr_number,
+                    TIMESTAMPDIFF(MICROSECOND, ar.started_at, ar.finished_at) DIV 1000 AS duration_ms,
                     (SELECT COUNT(*) FROM analysis_findings f WHERE f.run_id = ar.id) AS findings
              FROM analysis_runs ar JOIN repositories r ON r.id = ar.repository_id
              LEFT JOIN repository_events e ON e.id = ar.event_id WHERE ar.id = ?"

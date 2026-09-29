@@ -88,7 +88,7 @@ def test_run_digest_is_stored_with_findings_and_gaps(conn):
     # OSV is off here, so there is no vulnerability finding.
     assert content["findings"]["by_severity"] == {"critical": 1, "medium": 2, "low": 1}
     assert content["findings"]["new"] == content["findings"]["total"] == 4
-    assert "AI review: llm_not_configured" in content["gaps"]
+    assert "AI review: no AI provider is configured" in content["gaps"]
     assert scalar(conn, "SELECT COUNT(*) FROM digest_runs WHERE run_id = %s", (run_id,)) == 1
     state = json.loads(
         scalar(conn, "SELECT state FROM analysis_checkpoints WHERE phase = 'digest'")

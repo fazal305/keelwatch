@@ -24,6 +24,7 @@
   --success: #3fb27f;
   --warning: #d9a441;
   --danger: #e5534b;
+  --severity-high: #e0823d;
   --neutral: #8a94a3;
 
   --success-soft: rgb(63 178 127 / 0.14);
@@ -83,6 +84,7 @@
   --success: #1e7f53;
   --warning: #8a5d00;
   --danger: #c2362f;
+  --severity-high: #b4520f;
   --neutral: #5f6b7a;
 
   --success-soft: rgb(30 127 83 / 0.1);
@@ -114,6 +116,7 @@
     --success: #1e7f53;
     --warning: #8a5d00;
     --danger: #c2362f;
+    --severity-high: #b4520f;
     --neutral: #5f6b7a;
 
     --success-soft: rgb(30 127 83 / 0.1);

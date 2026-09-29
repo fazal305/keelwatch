@@ -17,6 +17,26 @@ const PATHS = {
     </>
   ),
   moon: <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />,
+  overview: (
+    <>
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1" />
+      <rect x="13.5" y="3.5" width="7" height="4" rx="1" />
+      <rect x="13.5" y="10.5" width="7" height="10" rx="1" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1" />
+    </>
+  ),
+  repo: <path d="M5 4.5h11.5a2 2 0 0 1 2 2v13H7a2 2 0 0 1-2-2zM5 17.5a2 2 0 0 1 2-2h11.5M9 8h6" />,
+  runs: <path d="M4 6h10M4 12h16M4 18h7M17 4l3 2-3 2M14 16l3 2-3 2" />,
+  findings: <path d="M5 21V4.5h11l-2 4 2 4H5" />,
+  events: <path d="M4 13h4l2 3h4l2-3h4M6.5 5h11l2.5 8v6H4v-6z" />,
+  digests: <path d="M7 3.5h7l4 4v13H7zM14 3.5v4h4M9.5 12h6M9.5 15.5h6" />,
+  user: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </>
+  ),
+  signout: <path d="M14 4.5h4.5v15H14M10 8l-4 4 4 4M6 12h9" />,
   offline: (
     <>
       <path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0" />

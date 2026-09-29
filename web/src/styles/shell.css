@@ -282,3 +282,43 @@
     padding: var(--space-4);
   }
 }
+
+/* ----- Rail user menu --------------------------------------------------- */
+
+.rail__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+}
+
+.rail__user {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.rail__role {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-transform: capitalize;
+}
+
+.rail__signout {
+  justify-content: flex-start;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.rail__list {
+  overflow-y: auto;
+}
+
+@media (max-width: 1023.98px) and (min-width: 768px) {
+  .rail__role {
+    display: none;
+  }
+}

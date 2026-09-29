@@ -152,6 +152,18 @@ def _review_summary(checkpoints: dict[str, dict]) -> dict[str, Any] | None:
     }
 
 
+# Machine reason codes -> words a reader can act on. Free-text reasons pass through.
+_SKIP_REASONS = {
+    "llm_not_configured": "no AI provider is configured",
+    "no_providers_configured": "no AI provider is configured",
+    "github_not_configured": "GitHub access is not configured",
+    "blocked_by_privacy_policy": "blocked by this repository's AI privacy policy",
+    "budget_exhausted": "the run's time budget ran out",
+    "all_providers_failed": "every AI provider failed",
+    "all_providers_circuit_open": "every AI provider is paused after repeated failures",
+}
+
+
 def _gaps(checkpoints: dict[str, dict]) -> list[str]:
     """What was *not* checked, so a quiet digest is never mistaken for a clean bill."""
     gaps: list[str] = []
@@ -168,7 +180,7 @@ def _gaps(checkpoints: dict[str, dict]) -> list[str]:
             gaps.append(f"{label}: did not run")
         elif cp["status"] == "skipped":
             reason = (_json(cp["state"]) or {}).get("reason", "skipped")
-            gaps.append(f"{label}: {reason}")
+            gaps.append(f"{label}: {_SKIP_REASONS.get(reason, reason)}")
         elif cp["status"] == "failed":
             gaps.append(f"{label}: failed")
     extract = _json((checkpoints.get("extract_changes") or {}).get("state")) or {}

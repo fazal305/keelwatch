@@ -39,7 +39,13 @@ export function formatDateTime(iso) {
   return Number.isNaN(date.getTime()) ? '—' : dateTimeFormatter.format(date);
 }
 
+/** 4.2 ms · 821 ms · 1.5 s · 2 min 5 s */
 export function formatMs(ms) {
   if (ms == null) return '—';
-  return ms < 10 ? `${ms.toFixed(1)} ms` : `${Math.round(ms)} ms`;
+  if (ms < 10) return `${ms.toFixed(1)} ms`;
+  if (ms < 1000) return `${Math.round(ms)} ms`;
+  if (ms < 60_000) return `${(ms / 1000).toFixed(1)} s`;
+  const minutes = Math.floor(ms / 60_000);
+  const seconds = Math.round((ms % 60_000) / 1000);
+  return seconds ? `${minutes} min ${seconds} s` : `${minutes} min`;
 }
