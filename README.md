@@ -148,6 +148,23 @@ and for private repositories contain no repository name, paths or finding
 titles. Delivery is at-least-once: a crash between sending and recording
 the delivery can repeat a message.
 
+## Analytics
+
+The **Analytics** page shows 7/30/90-day trends (UTC calendar days), for all
+repositories or one: runs per day with failures emphasised, new vs
+recurring findings, completed-run time (median and p95), and findings by
+severity and category. It is deliberately conservative:
+
+- days before Keelwatch started watching are shown as *no data*, not zero;
+- a day needs at least 3 completed runs before it gets a percentile, and
+  failed or cancelled runs are left out of run time;
+- percentiles are nearest-rank (always an observed value);
+- a period with only one or two active days is labelled a snapshot, not a
+  trend.
+
+Every chart has a "Show as table" view with the same numbers. Chart colours
+were checked for colour-vision separation and contrast in both themes.
+
 ## Tests
 
 ```bash

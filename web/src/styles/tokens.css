@@ -27,6 +27,13 @@
   --severity-high: #e0823d;
   --neutral: #8a94a3;
 
+  /* Charts: checked with the dataviz palette validator against --surface in
+     each theme (categorical slots 1-2; the recessive grey clears 3:1 and
+     CVD dE >= 8 against both the accent and --danger). */
+  --chart-series-1: #3987e5;
+  --chart-series-2: #d95926;
+  --chart-rest: #636d7b;
+
   --success-soft: rgb(63 178 127 / 0.14);
   --warning-soft: rgb(217 164 65 / 0.14);
   --danger-soft: rgb(229 83 75 / 0.14);
@@ -86,6 +93,9 @@
   --danger: #c2362f;
   --severity-high: #b4520f;
   --neutral: #5f6b7a;
+  --chart-series-1: #2a78d6;
+  --chart-series-2: #eb6834;
+  --chart-rest: #8c95a2;
 
   --success-soft: rgb(30 127 83 / 0.1);
   --warning-soft: rgb(138 93 0 / 0.1);
@@ -118,6 +128,9 @@
     --danger: #c2362f;
     --severity-high: #b4520f;
     --neutral: #5f6b7a;
+    --chart-series-1: #2a78d6;
+    --chart-series-2: #eb6834;
+    --chart-rest: #8c95a2;
 
     --success-soft: rgb(30 127 83 / 0.1);
     --warning-soft: rgb(138 93 0 / 0.1);

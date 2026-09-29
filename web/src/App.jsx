@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import { AuthProvider } from './auth/AuthProvider.jsx';
 import { useAuth } from './auth/AuthContext.js';
@@ -15,6 +16,9 @@ import { Repositories, RepositoryDetail } from './pages/Repositories.jsx';
 import { RunDetail, Runs } from './pages/Runs.jsx';
 import { SignIn } from './pages/SignIn.jsx';
 import { SystemHealth } from './pages/SystemHealth.jsx';
+
+// Chart.js is only needed here, so it loads with this page instead of the app shell.
+const Analytics = lazy(() => import('./pages/Analytics.jsx').then((m) => ({ default: m.Analytics })));
 
 /**
  * Gate for everything except /signin. While the session check is in flight
@@ -85,6 +89,14 @@ export function App() {
           <Route path="events" element={<Events />} />
           <Route path="digests" element={<Digests />} />
           <Route path="digests/:id" element={<DigestDetail />} />
+          <Route
+            path="analytics"
+            element={
+              <Suspense fallback={<p className="muted" role="status">Loading analytics…</p>}>
+                <Analytics />
+              </Suspense>
+            }
+          />
           <Route path="integrations" element={<Integrations />} />
           <Route path="system" element={<SystemHealth />} />
           <Route path="account" element={<Account />} />

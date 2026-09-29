@@ -108,6 +108,15 @@ final class DashboardRoutes
             return $q instanceof Response ? $q : Response::json($repo()->digests($q, $q['before'] ?? null, $q['limit'] ?? self::DEFAULT_LIMIT));
         }, Router::VIEWER);
 
+        $router->get('/api/analytics', function (Request $r): Response {
+            $q = $this->params($r, ['days' => array_map('strval', AnalyticsRepository::RANGES), 'repository_id' => 'id']);
+            if ($q instanceof Response) {
+                return $q;
+            }
+            $analytics = new AnalyticsRepository(($this->connect)());
+            return self::found($analytics->summary((int) ($q['days'] ?? 30), $q['repository_id'] ?? null), 'Repository');
+        }, Router::VIEWER);
+
         $router->get('/api/digests/{id}', fn (Request $r, array $p): Response => self::found($repo()->digest($p['id']), 'Digest'), Router::VIEWER);
     }
 
