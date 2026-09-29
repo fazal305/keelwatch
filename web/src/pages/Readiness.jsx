@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router';
 import { EmptyState, Panel } from '../components/Feedback.jsx';
-import { PageHeader, RelTime, SelectFilter } from '../components/Page.jsx';
+import { NoResults, PageHeader, RelTime, SelectFilter } from '../components/Page.jsx';
 import { Resource } from '../components/Resource.jsx';
 import { StatusIndicator } from '../components/StatusIndicator.jsx';
 import { withQuery } from '../lib/api.js';
@@ -130,11 +130,16 @@ export function Readiness() {
       <Resource
         api={api}
         label="readiness signals"
+        onResetFilters={filters.clear}
         isEmpty={(d) => d.accounts.length === 0}
         empty={
-          <EmptyState title="No repositories to assess yet">
-            <p>Readiness signals appear once the GitHub App is installed on an account and its repositories start sending events.</p>
-          </EmptyState>
+          filters.values.installation_id ? (
+            <NoResults onClear={() => filters.set('installation_id', '')} />
+          ) : (
+            <EmptyState title="No repositories to assess yet">
+              <p>Readiness signals appear once the GitHub App is installed on an account and its repositories start sending events.</p>
+            </EmptyState>
+          )
         }
       >
         {(d) => (

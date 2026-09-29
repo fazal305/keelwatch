@@ -61,6 +61,21 @@ describe('fetchJson', () => {
     expect(await failure(fetchJson('/x', { timeoutMs: 20 }))).toMatchObject({ kind: 'timeout' });
   });
 
+  it('warns that a timed-out write may still have been applied', async () => {
+    const hang = vi.fn(
+      (_url, { signal }) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        }),
+    );
+    vi.stubGlobal('fetch', hang);
+    const read = await failure(fetchJson('/x', { timeoutMs: 20 }));
+    const write = await failure(fetchJson('/x', { method: 'POST', body: {}, timeoutMs: 20 }));
+    expect(read.message).not.toMatch(/may still have been saved/);
+    expect(write).toMatchObject({ kind: 'timeout' });
+    expect(write.message).toMatch(/may still have been saved; reload the page to check/);
+  });
+
   it('distinguishes caller cancellation from timeouts', async () => {
     vi.stubGlobal(
       'fetch',

@@ -29,6 +29,7 @@ export function Digests() {
       <Resource
         api={paged}
         label="digests"
+        onResetFilters={filters.clear}
         isEmpty={(items) => items.length === 0}
         empty={filters.active ? <NoResults onClear={filters.clear} /> : <EmptyState title="No digests yet"><p>A digest is written at the end of every analysis run.</p></EmptyState>}
       >

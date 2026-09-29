@@ -57,6 +57,26 @@ describe('Integrations', () => {
     expect(screen.getByText('Only while public')).toBeInTheDocument();
   });
 
+  it('shows a rejected save even when the 422 carries no per-field errors', async () => {
+    renderAs('admin', async (input, init) => {
+      const path = new URL(input, 'http://localhost').pathname;
+      if (path === '/api/destinations' && init?.method === 'POST') {
+        return jsonResponse({ error: { code: 'validation_failed', message: 'This destination was rejected.' } }, 422);
+      }
+      if (path === '/api/destinations') {
+        return jsonResponse({ items: [], installations: [{ id: 5, account_login: 'acme', status: 'active' }], encryption_configured: true });
+      }
+      return jsonResponse({ items: [] });
+    });
+
+    fireEvent.change(await screen.findByLabelText('Name'), { target: { value: '#alerts' } });
+    fireEvent.change(screen.getByLabelText('Webhook URL'), { target: { value: 'https://hooks.slack.com/services/T0/B0/x' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add destination' }));
+
+    expect(await screen.findByText('Couldn’t add the destination')).toBeInTheDocument();
+    expect(screen.getByText('This destination was rejected.')).toBeInTheDocument();
+  });
+
   it('tells admins there is no GitHub account to attach a destination to', async () => {
     renderAs('admin', async (input) => {
       const path = new URL(input, 'http://localhost').pathname;

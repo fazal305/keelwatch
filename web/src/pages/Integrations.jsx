@@ -110,8 +110,10 @@ function AddDestination({ installations, onAdded }) {
       setState({ saving: false, error: null });
       onAdded(created);
     } catch (error) {
-      setState({ saving: false, error: error.kind === 'validation' ? null : error });
-      if (error.kind === 'validation' && error.fields) {
+      // A 422 without per-field errors still has to be shown somewhere.
+      const fieldErrors = error.kind === 'validation' && error.fields ? error.fields : null;
+      setState({ saving: false, error: fieldErrors ? null : error });
+      if (fieldErrors) {
         setErrors(error.fields);
         focusFirst(error.fields);
       }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchJson, withQuery } from './api.js';
+import { useReconnect } from './useReconnect.js';
 
 /**
  * Cursor-paginated list ({items, next_before}) with "load more".
@@ -9,9 +10,13 @@ export function usePaged(path, params) {
   const key = JSON.stringify(params);
   const [state, setState] = useState({ items: null, next: null, error: null, loading: true, slow: false });
   const controllerRef = useRef(null);
+  // The cursor of the last request, so a retry repeats exactly that request
+  // (retrying a failed "load more" must not throw away the pages already shown).
+  const lastBeforeRef = useRef(undefined);
 
   const fetchPage = useCallback(
     async (before) => {
+      lastBeforeRef.current = before;
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
@@ -51,6 +56,9 @@ export function usePaged(path, params) {
     };
   }, [fetchPage]);
 
+  const retry = () => fetchPage(lastBeforeRef.current);
+  useReconnect(state.error, retry);
+
   return {
     data: state.items,
     error: state.error,
@@ -58,6 +66,6 @@ export function usePaged(path, params) {
     slow: state.slow,
     hasMore: state.next !== null,
     loadMore: () => fetchPage(state.next),
-    reload: () => fetchPage(undefined),
+    reload: retry,
   };
 }

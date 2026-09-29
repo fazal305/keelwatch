@@ -27,8 +27,17 @@ export function Runs() {
       <Resource
         api={paged}
         label="analysis runs"
+        onResetFilters={filters.clear}
         isEmpty={(items) => items.length === 0}
-        empty={filters.active ? <NoResults onClear={filters.clear} /> : <EmptyState title="No analysis runs yet" />}
+        empty={
+          filters.active ? (
+            <NoResults onClear={filters.clear} />
+          ) : (
+            <EmptyState title="No analysis runs yet">
+              <p>Runs start when a pull request opens or updates, or when commits are pushed to a default branch.</p>
+            </EmptyState>
+          )
+        }
       >
         {(items) => (
           <>
@@ -91,11 +100,13 @@ function RunActions({ run, onChanged }) {
   const { isAdmin } = useAuth();
   const dialogRef = useRef(null);
   const [pending, setPending] = useState(null);
+  const [working, setWorking] = useState(null); // the action in flight
   const [result, setResult] = useState(null);
 
   if (!isAdmin || (!run.can_resume && !run.can_cancel)) return null;
 
   const confirm = (action) => {
+    if (working) return;
     setResult(null);
     setPending(action);
     dialogRef.current?.showModal();
@@ -105,26 +116,30 @@ function RunActions({ run, onChanged }) {
     const action = pending;
     dialogRef.current?.close();
     setPending(null);
+    setWorking(action);
     try {
       await fetchJson(`/api/runs/${run.id}/${action}`, { method: 'POST' });
       setResult({ ok: true, message: action === 'resume' ? 'Resume queued. The worker will pick it up shortly.' : 'Run cancelled.' });
       onChanged();
     } catch (error) {
       setResult({ ok: false, error });
+    } finally {
+      setWorking(null);
     }
   };
 
   return (
     <>
+      {/* aria-disabled, not disabled: a disabled button drops keyboard focus. */}
       <div className="page__actions">
         {run.can_resume && (
-          <button type="button" className="button" onClick={() => confirm('resume')}>
-            Resume run
+          <button type="button" className="button" aria-disabled={Boolean(working)} onClick={() => confirm('resume')}>
+            {working === 'resume' ? 'Resuming…' : 'Resume run'}
           </button>
         )}
         {run.can_cancel && (
-          <button type="button" className="button button--danger" onClick={() => confirm('cancel')}>
-            Cancel run
+          <button type="button" className="button button--danger" aria-disabled={Boolean(working)} onClick={() => confirm('cancel')}>
+            {working === 'cancel' ? 'Cancelling…' : 'Cancel run'}
           </button>
         )}
       </div>

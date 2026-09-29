@@ -28,9 +28,12 @@ export function TableSkeleton({ rows = 5 }) {
  * - error with no data: an actionable error with retry and reference
  * - error with data (a failed refresh): the error above the last good data
  * - empty: the caller's empty state (distinct from "no results")
+ * - invalid filters (422 on a list, e.g. an old bookmark): name them and
+ *   offer to clear them, since retrying the same request can't succeed
  */
-export function Resource({ api, label, isEmpty, empty, children }) {
+export function Resource({ api, label, isEmpty, empty, children, onResetFilters }) {
   const { data, error, loading, slow, reload } = api;
+  const badFilters = error?.kind === 'validation' && onResetFilters;
   return (
     <>
       {slow && (
@@ -38,10 +41,27 @@ export function Resource({ api, label, isEmpty, empty, children }) {
           Loading {label} is taking longer than usual. Still waiting…
         </p>
       )}
-      {error && error.kind !== 'unauthenticated' && (
+      {badFilters && (
+        <div className="empty-state" role="alert">
+          <p className="empty-state__title">This link has filters that aren’t valid</p>
+          <div className="empty-state__body">
+            {error.fields && <p>{Object.keys(error.fields).join(', ')}: {Object.values(error.fields)[0]}</p>}
+            <button type="button" className="button" onClick={onResetFilters}>
+              Clear filters
+            </button>
+          </div>
+        </div>
+      )}
+      {error && !badFilters && error.kind !== 'unauthenticated' && (
         <InlineError
           title={data ? `Couldn't refresh ${label}` : `Couldn't load ${label}`}
-          message={error.message}
+          message={
+            // Only an offline browser gets the "reloads by itself" promise: the
+            // online event is what triggers the retry (useReconnect).
+            error.kind === 'offline'
+              ? `${error.message} ${data ? 'Showing what was loaded before. ' : ''}This reloads by itself when you're back online.`
+              : error.message
+          }
           correlationId={error.correlationId}
           onRetry={reload}
           retrying={loading}

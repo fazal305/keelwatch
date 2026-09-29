@@ -112,6 +112,7 @@ export function Findings() {
       <Resource
         api={paged}
         label="findings"
+        onResetFilters={clear}
         isEmpty={(items) => items.length === 0}
         empty={
           filters.active ? (

@@ -35,6 +35,7 @@ export function Events() {
       <Resource
         api={paged}
         label="events"
+        onResetFilters={filters.clear}
         isEmpty={(items) => items.length === 0}
         empty={
           filters.active ? (

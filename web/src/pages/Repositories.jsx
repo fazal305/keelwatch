@@ -53,6 +53,7 @@ export function Repositories() {
       <Resource
         api={api}
         label="repositories"
+        onResetFilters={clear}
         isEmpty={(d) => d.items.length === 0}
         empty={
           filters.active ? (

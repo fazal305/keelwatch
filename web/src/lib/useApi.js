@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchJson } from './api.js';
+import { useReconnect } from './useReconnect.js';
 
 /**
  * Loads one API resource with the states every page needs:
@@ -38,6 +39,8 @@ export function useApi(path, { slowAfterMs = 5000, enabled = true } = {}) {
       controllerRef.current?.abort();
     };
   }, [load]);
+
+  useReconnect(state.error, load);
 
   return { ...state, reload: load };
 }

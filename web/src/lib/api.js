@@ -67,7 +67,14 @@ export async function fetchJson(path, { signal, timeoutMs = 8000, method = 'GET'
     });
   } catch {
     if (timedOut) {
-      throw new ApiError('timeout', `The API did not respond within ${timeoutMs / 1000} seconds.`);
+      // A write that timed out may still have been applied: say so, so nobody
+      // blindly retries into a duplicate.
+      throw new ApiError(
+        'timeout',
+        method === 'GET'
+          ? `The API did not respond within ${timeoutMs / 1000} seconds.`
+          : `The API did not respond within ${timeoutMs / 1000} seconds. The change may still have been saved; reload the page to check before trying again.`,
+      );
     }
     if (signal?.aborted) {
       throw new ApiError('aborted', 'The request was cancelled.');

@@ -324,7 +324,7 @@ export function Analytics() {
         />
       </div>
       <div className={api.loading && api.data ? 'is-refreshing' : undefined} aria-busy={api.loading || undefined}>
-        <Resource api={api} label="analytics">
+        <Resource api={api} label="analytics" onResetFilters={filters.clear}>
           {(data) => <Report data={data} />}
         </Resource>
       </div>
