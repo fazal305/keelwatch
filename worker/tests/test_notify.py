@@ -18,14 +18,15 @@ from keelwatch_worker.notify.destinations import (
 )
 from keelwatch_worker.notify.format import meets_threshold, render_daily, render_run
 
-VECTOR = json.loads(
-    (
-        Path(__file__).resolve().parents[2]
-        / "contracts"
-        / "test-vectors"
-        / "notification-url-encryption.v1.json"
-    ).read_text(encoding="utf-8")
+VECTORS_DIR = Path(__file__).resolve().parents[2] / "contracts" / "test-vectors"
+VECTOR = json.loads((VECTORS_DIR / "notification-url-encryption.v1.json").read_text(encoding="utf-8"))
+URL_CASES = json.loads(
+    (VECTORS_DIR / "notification-destination-urls.v1.json").read_text(encoding="utf-8")
 )
+GENERATED_INVALID = [
+    {"kind": c["kind"], "url": c["prefix"] + c["repeat"] * c["count"], "why": c["why"]}
+    for c in URL_CASES["invalid_generated"]
+]
 # Webhook-shaped test URLs are assembled at runtime; none is a real webhook.
 SLACK_URL = "https://hooks.slack.com/services/" + "T0TEST/B0TEST/" + "x" * 24
 DISCORD_URL = "https://discord.com/api/webhooks/" + "123456789/" + "t" * 40
@@ -97,6 +98,21 @@ def test_valid_webhooks_are_accepted():
 def test_anything_else_is_refused(kind, url):
     with pytest.raises(InvalidDestination):
         validate_url(kind, url)
+
+
+# The shared cases the PHP API is tested against too, so both sides agree on
+# exactly which URLs may be stored and sent to.
+@pytest.mark.parametrize("case", URL_CASES["valid"], ids=lambda c: c["url"].strip()[:60])
+def test_shared_vector_valid_urls(case):
+    assert validate_url(case["kind"], case["url"]) == case["host"]
+
+
+@pytest.mark.parametrize(
+    "case", URL_CASES["invalid"] + GENERATED_INVALID, ids=lambda c: c["why"]
+)
+def test_shared_vector_invalid_urls(case):
+    with pytest.raises(InvalidDestination):
+        validate_url(case["kind"], case["url"])
 
 
 @pytest.mark.parametrize(

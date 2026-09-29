@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../auth/AuthContext.js';
+import { useStickyOffset } from '../lib/useStickyOffset.js';
 import { Icon } from './Icon.jsx';
 import { StatusBar } from './StatusBar.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
   { to: '/findings', label: 'Findings', icon: 'findings' },
   { to: '/events', label: 'Events', icon: 'events' },
   { to: '/digests', label: 'Digests', icon: 'digests' },
+  { to: '/integrations', label: 'Integrations', icon: 'plug' },
   { to: '/system', label: 'System health', icon: 'pulse' },
 ];
 
@@ -69,6 +71,7 @@ export function AppShell() {
   const menuButtonRef = useRef(null);
   const navRef = useRef(null);
   const location = useLocation();
+  useStickyOffset(isMobile ? 'mobile' : 'wide');
 
   const closeDrawer = useCallback((restoreFocus = true) => {
     setDrawerOpen(false);

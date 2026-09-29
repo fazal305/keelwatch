@@ -1,0 +1,39 @@
+{
+  "description": "Webhook URLs the API (PHP) and worker (Python) must both accept or both reject. All tokens are fake and do not belong to any real workspace or server.",
+  "valid": [
+    { "kind": "slack", "url": "https://hooks.slack.com/services/T0TEST/B0TEST/notreal", "host": "hooks.slack.com" },
+    { "kind": "slack", "url": "https://hooks.slack.com:443/services/T0/B0/abc123", "host": "hooks.slack.com" },
+    { "kind": "slack", "url": "  https://HOOKS.SLACK.COM/services/T0/B0/abc123  ", "host": "hooks.slack.com" },
+    { "kind": "discord", "url": "https://discord.com/api/webhooks/123456789012345678/fake-token_ABC", "host": "discord.com" },
+    { "kind": "discord", "url": "https://discordapp.com/api/webhooks/1/x", "host": "discordapp.com" }
+  ],
+  "invalid": [
+    { "kind": "teams", "url": "https://hooks.slack.com/services/T0/B0/abc123", "why": "unknown kind" },
+    { "kind": "slack", "url": "http://hooks.slack.com/services/T0/B0/abc123", "why": "not https" },
+    { "kind": "slack", "url": "https://user:pass@hooks.slack.com/services/T0/B0/abc123", "why": "userinfo" },
+    { "kind": "slack", "url": "https://hooks.slack.com@evil.example/services/T0/B0/abc123", "why": "userinfo pointing elsewhere" },
+    { "kind": "slack", "url": "https://hooks.slack.com\\@evil.example/services/T0/B0/abc123", "why": "backslash authority confusion" },
+    { "kind": "slack", "url": "https://hooks.slack.com:8443/services/T0/B0/abc123", "why": "non-default port" },
+    { "kind": "slack", "url": "https://hooks.slack.com/services/T0/B0/abc123?x=1", "why": "query string" },
+    { "kind": "slack", "url": "https://hooks.slack.com/services/T0/B0/abc123#frag", "why": "fragment" },
+    { "kind": "slack", "url": "https://hooks.slack.com./services/T0/B0/abc123", "why": "trailing-dot host" },
+    { "kind": "slack", "url": "https://hooks.slack.com.evil.example/services/T0/B0/abc123", "why": "lookalike host" },
+    { "kind": "slack", "url": "https://127.0.0.1/services/T0/B0/abc123", "why": "IP literal" },
+    { "kind": "slack", "url": "https://[::1]/services/T0/B0/abc123", "why": "IPv6 literal" },
+    { "kind": "slack", "url": "https://hooks.slack.com/services/T0/B0/abc123/extra", "why": "extra path segment" },
+    { "kind": "slack", "url": "https://hooks.slack.com/services/T0/B0/../../x", "why": "dot segments" },
+    { "kind": "slack", "url": "https://hooks.slack.com/services/T0/B0/abc%2F123", "why": "encoded slash" },
+    { "kind": "slack", "url": "https://hooks.slack.com/services/T0/B0/abc\n123", "why": "embedded newline (urlsplit would strip it)" },
+    { "kind": "slack", "url": "https://hooks.slack.com/services/T0/B0/abc\t123", "why": "embedded tab" },
+    { "kind": "slack", "url": "https://discord.com/api/webhooks/1/x", "why": "discord URL under slack kind" },
+    { "kind": "discord", "url": "https://hooks.slack.com/services/T0/B0/abc123", "why": "slack URL under discord kind" },
+    { "kind": "discord", "url": "https://discord.com/api/webhooks/notanumber/x", "why": "non-numeric webhook id" },
+    { "kind": "discord", "url": "https://ptb.discord.com/api/webhooks/1/x", "why": "subdomain not allowlisted" },
+    { "kind": "discord", "url": "", "why": "empty" },
+    { "kind": "discord", "url": "discord.com/api/webhooks/1/x", "why": "no scheme" },
+    { "kind": "slack", "url": "javascript:alert(1)", "why": "script scheme" }
+  ],
+  "invalid_generated": [
+    { "kind": "slack", "prefix": "https://hooks.slack.com/services/T0/B0/", "repeat": "a", "count": 480, "why": "longer than 500 characters" }
+  ]
+}

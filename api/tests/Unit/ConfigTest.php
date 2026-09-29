@@ -60,6 +60,26 @@ final class ConfigTest extends TestCase
         TestConfig::make(['API_CORS_ORIGINS' => 'https://app.example.com/path']);
     }
 
+    public function testNotificationKeyIsOptionalDecodedAndRedacted(): void
+    {
+        self::assertSame('', TestConfig::make(['NOTIFICATION_KEY' => ''])->notificationKey);
+
+        $raw = random_bytes(32);
+        $config = TestConfig::make(['NOTIFICATION_KEY' => base64_encode($raw)]);
+        self::assertSame($raw, $config->notificationKey);
+        self::assertStringNotContainsString(base64_encode($raw), print_r($config, true));
+
+        foreach ([base64_encode(random_bytes(16)), 'not base64 !!', base64_encode(random_bytes(33))] as $bad) {
+            try {
+                TestConfig::make(['NOTIFICATION_KEY' => $bad]);
+                self::fail('Expected ConfigException');
+            } catch (ConfigException $e) {
+                self::assertStringContainsString('NOTIFICATION_KEY must be base64 of exactly 32 bytes', $e->getMessage());
+                self::assertStringNotContainsString($bad, $e->getMessage());
+            }
+        }
+    }
+
     public function testWithDatabaseOnlyChangesTheName(): void
     {
         $config = TestConfig::make();

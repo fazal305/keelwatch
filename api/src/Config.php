@@ -40,6 +40,7 @@ final class Config
         public readonly int $sessionIdleMinutes = 60,
         public readonly int $sessionAbsoluteHours = 12,
         public readonly bool $sessionCookieSecure = true,
+        public readonly string $notificationKey = '',
     ) {
     }
 
@@ -47,7 +48,7 @@ final class Config
     {
         // Keep secrets out of var_dump/print_r output.
         $values = get_object_vars($this);
-        foreach (['dbPassword', 'appSecret', 'webhookSecrets'] as $secret) {
+        foreach (['dbPassword', 'appSecret', 'webhookSecrets', 'notificationKey'] as $secret) {
             $values[$secret] = '[REDACTED]';
         }
         return $values;
@@ -143,6 +144,19 @@ final class Config
             $errors[] = 'SESSION_COOKIE_SECURE cannot be false in production';
         }
 
+        // Encrypts stored webhook URLs; shared with the worker, which decrypts
+        // them to send. Optional: without it, destinations can't be added.
+        $notificationKey = '';
+        $keyRaw = trim($env['NOTIFICATION_KEY'] ?? '');
+        if ($keyRaw !== '') {
+            $decoded = base64_decode($keyRaw, true);
+            if ($decoded === false || strlen($decoded) !== 32) {
+                $errors[] = 'NOTIFICATION_KEY must be base64 of exactly 32 bytes';
+            } else {
+                $notificationKey = $decoded;
+            }
+        }
+
         $config = new self(
             appEnv: $appEnv,
             appVersion: trim($env['APP_VERSION'] ?? '') ?: '0.0.0',
@@ -165,6 +179,7 @@ final class Config
             sessionIdleMinutes: $positiveInt('SESSION_IDLE_MINUTES', 60, 24 * 60),
             sessionAbsoluteHours: $positiveInt('SESSION_ABSOLUTE_HOURS', 12, 24 * 30),
             sessionCookieSecure: $sessionCookieSecure,
+            notificationKey: $notificationKey,
         );
 
         if ($errors !== []) {

@@ -123,8 +123,16 @@ for a clean one). After `DIGEST_DAILY_HOUR_UTC`, the worker also stores one
 daily digest per installation for the previous UTC day.
 
 Notifications to Slack or Discord are optional and off until
-`NOTIFICATION_KEY` is set. Destinations are managed from the worker (the
-webhook URL is asked for at a hidden prompt and stored encrypted):
+`NOTIFICATION_KEY` is set (the API and the worker read the same key).
+Administrators manage destinations on the dashboard's **Integrations** page:
+add, pause, change the severity threshold, replace a leaked URL, or remove.
+The webhook URL is write-only: it is stored AES-256-GCM encrypted and never
+returned by the API or shown again. The same page holds per-repository
+settings (pause analysis; AI review off / only while public / allowed).
+Viewers can see all of this but change none of it.
+
+The worker CLI does the same from a terminal (the URL is read at a hidden
+prompt):
 
 ```bash
 python -m keelwatch_worker destinations add --installation <github installation id> --kind slack --label team --min-severity high
@@ -133,7 +141,8 @@ python -m keelwatch_worker destinations disable <id>
 ```
 
 Safety rules: only exact Slack/Discord webhook URLs that resolve to public
-addresses; no redirects; Discord messages can't ping anyone and Slack
+addresses (the API and worker are held to the same cases in
+`contracts/test-vectors/notification-destination-urls.v1.json`); no redirects; Discord messages can't ping anyone and Slack
 control sequences are escaped; messages never contain code or evidence,
 and for private repositories contain no repository name, paths or finding
 titles. Delivery is at-least-once: a crash between sending and recording

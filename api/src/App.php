@@ -8,6 +8,7 @@ use Keelwatch\Auth\AuthContext;
 use Keelwatch\Auth\AuthService;
 use Keelwatch\Auth\PasswordPolicyError;
 use Keelwatch\Dashboard\DashboardRoutes;
+use Keelwatch\Dashboard\IntegrationRoutes;
 use Keelwatch\Health\HealthService;
 use Keelwatch\Http\Cors;
 use Keelwatch\Http\Request;
@@ -47,6 +48,7 @@ final class App
         private readonly ?WebhookHandler $webhooks = null,
         private readonly ?AuthService $auth = null,
         private readonly ?DashboardRoutes $dashboard = null,
+        private readonly ?IntegrationRoutes $integrations = null,
     ) {
         $this->requestLogger = $logger;
         $this->router = new Router();
@@ -173,6 +175,7 @@ final class App
             $this->registerAuthRoutes($this->auth);
         }
         $this->dashboard?->register($this->router);
+        $this->integrations?->register($this->router);
     }
 
     private function registerAuthRoutes(AuthService $auth): void

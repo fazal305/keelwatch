@@ -221,7 +221,7 @@ export function DigestDetail() {
                 ) : (
                   <EmptyState title="Not sent anywhere">
                     <p>
-                      No destination matched, or notifications are off.
+                      No destination matched, or notifications are off. <Link to="/integrations">Manage destinations</Link>
                     </p>
                   </EmptyState>
                 )}

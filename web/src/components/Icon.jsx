@@ -10,6 +10,7 @@ const PATHS = {
     </>
   ),
   pulse: <path d="M3 12h4l2.5-6 5 12 2.5-6H21" />,
+  plug: <path d="M9 3.5v4M15 3.5v4M6.5 7.5h11v3a5.5 5.5 0 0 1-11 0zM12 16v4.5" />,
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />

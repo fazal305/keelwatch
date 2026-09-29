@@ -32,6 +32,8 @@ KINDS = ("slack", "discord")
 SEVERITIES = ("critical", "high", "medium", "low", "info")
 _SLACK_PATH = re.compile(r"/services/[A-Za-z0-9]+/[A-Za-z0-9]+/[A-Za-z0-9]+")
 _DISCORD_PATH = re.compile(r"/api/webhooks/[0-9]{1,25}/[A-Za-z0-9_-]{1,100}")
+_UNSAFE_CHARS = re.compile(r"[\x00-\x20\x7f]")
+MAX_URL_LENGTH = 500
 DISCORD_LIMIT = 2000
 SLACK_LIMIT = 3500
 
@@ -46,8 +48,13 @@ def validate_url(kind: str, url: str) -> str:
     """Returns the host if the URL is an allowed webhook for this kind."""
     if kind not in KINDS:
         raise InvalidDestination(f"kind must be one of {', '.join(KINDS)}")
+    url = url.strip()
+    # urlsplit silently drops tabs and newlines; refuse them (and any control
+    # character or space) so what is stored is exactly what was validated.
+    if not url or len(url) > MAX_URL_LENGTH or _UNSAFE_CHARS.search(url):
+        raise InvalidDestination("not a valid URL")
     try:
-        parts = urllib.parse.urlsplit(url.strip())
+        parts = urllib.parse.urlsplit(url)
         port = parts.port
     except ValueError as exc:
         raise InvalidDestination("not a valid URL") from exc

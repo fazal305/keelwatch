@@ -8,6 +8,7 @@ import { Account } from './pages/Account.jsx';
 import { DigestDetail, Digests } from './pages/Digests.jsx';
 import { Events } from './pages/Events.jsx';
 import { FindingDetail, Findings } from './pages/Findings.jsx';
+import { Integrations } from './pages/Integrations.jsx';
 import { NotFound } from './pages/NotFound.jsx';
 import { Overview } from './pages/Overview.jsx';
 import { Repositories, RepositoryDetail } from './pages/Repositories.jsx';
@@ -84,6 +85,7 @@ export function App() {
           <Route path="events" element={<Events />} />
           <Route path="digests" element={<Digests />} />
           <Route path="digests/:id" element={<DigestDetail />} />
+          <Route path="integrations" element={<Integrations />} />
           <Route path="system" element={<SystemHealth />} />
           <Route path="account" element={<Account />} />
           <Route path="*" element={<NotFound />} />

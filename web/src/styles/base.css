@@ -7,6 +7,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Keeps focused and scrolled-to elements clear of the sticky bars;
+     --sticky-offset is measured by useStickyOffset(). */
+  scroll-padding-top: calc(var(--sticky-offset, 0px) + 8px);
 }
 
 body {
