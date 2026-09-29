@@ -229,11 +229,13 @@ final class ReadinessRepository
 
         // Latest completed run per repository and its serious findings.
         $latest = $grouped(
-            "SELECT r.repository_id, r.id AS run_id, r.created_at,
-                    (SELECT COUNT(*) FROM analysis_findings f WHERE f.run_id = r.id AND f.severity IN ('critical', 'high')) AS serious
-               FROM analysis_runs r
-              WHERE r.repository_id IN ({$in}) AND r.status = 'completed'
-                AND r.id = (SELECT MAX(r2.id) FROM analysis_runs r2 WHERE r2.repository_id = r.repository_id AND r2.status = 'completed')",
+            // Grouped once, not a correlated MAX per run: that version took 77 s
+            // on 20k runs (bench/dashboard.php); this is one index probe per repository.
+            "SELECT latest.repository_id, latest.run_id,
+                    (SELECT COUNT(*) FROM analysis_findings f WHERE f.run_id = latest.run_id AND f.severity IN ('critical', 'high')) AS serious
+               FROM (SELECT repository_id, MAX(id) AS run_id FROM analysis_runs
+                      WHERE repository_id IN ({$in}) AND status = 'completed'
+                      GROUP BY repository_id) latest",
             $ids,
         );
 

@@ -333,6 +333,39 @@ def llm_findings(review: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+def mark_new_findings(cur: Any, run_id: int) -> None:
+    """Keep analysis_findings.is_new equal to its definition: new means no
+    earlier run of the repository reported the same fingerprint.
+
+    Two statements, because runs of one repository can finish out of order:
+    this run's findings are new unless an earlier run has them, and any later
+    run's copy of a fingerprint this run has is no longer new.
+    """
+    cur.execute(
+        """
+        UPDATE analysis_findings f
+          LEFT JOIN analysis_findings prev
+            ON prev.repository_id = f.repository_id
+           AND prev.fingerprint = f.fingerprint
+           AND prev.run_id < f.run_id
+           SET f.is_new = (prev.id IS NULL)
+         WHERE f.run_id = %s
+        """,
+        (run_id,),
+    )
+    cur.execute(
+        """
+        UPDATE analysis_findings later
+          JOIN analysis_findings mine
+            ON mine.repository_id = later.repository_id
+           AND mine.fingerprint = later.fingerprint
+           SET later.is_new = 0
+         WHERE mine.run_id = %s AND later.run_id > mine.run_id
+        """,
+        (run_id,),
+    )
+
+
 def normalize_findings(ctx: RunContext, budget: Budget) -> dict[str, Any]:
     candidates: list[dict[str, Any]] = []
     for phase in ("secrets", "dependencies", "structure"):
@@ -376,6 +409,7 @@ def normalize_findings(ctx: RunContext, budget: Budget) -> dict[str, Any]:
                 ),
             )
             inserted += cur.rowcount
+        mark_new_findings(cur, ctx.run["id"])
 
     by_severity: dict[str, int] = {}
     for f in valid:

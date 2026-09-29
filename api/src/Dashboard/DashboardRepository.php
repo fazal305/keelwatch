@@ -174,7 +174,9 @@ final class DashboardRepository
             "SELECT d.id, d.github_delivery_id, d.event, d.action, d.status, d.ignore_reason, d.payload_bytes,
                     d.received_at, d.correlation_id, d.repository_id, r.full_name,
                     e.id AS event_id, e.type AS event_type, e.pr_number, e.head_sha, e.actor_login,
-                    (SELECT ar.id FROM analysis_runs ar WHERE ar.event_id = e.id ORDER BY ar.id LIMIT 1) AS run_id
+                    -- MIN, not ORDER BY id LIMIT 1: the latter tempted the planner into
+                    -- scanning the runs primary key for every event (bench/dashboard.php).
+                    (SELECT MIN(ar.id) FROM analysis_runs ar WHERE ar.event_id = e.id) AS run_id
              FROM webhook_deliveries d
              LEFT JOIN repositories r ON r.id = d.repository_id
              LEFT JOIN repository_events e ON e.delivery_id = d.id
@@ -457,8 +459,7 @@ final class DashboardRepository
         $stmt = $this->pdo->prepare(
             "SELECT f.id, f.run_id, f.repository_id, r.full_name, r.is_private, f.phase, f.severity, f.category,
                     f.confidence, f.title, f.file_path, f.line_start, f.source, f.rule_id, f.created_at,
-                    EXISTS (SELECT 1 FROM analysis_findings prev WHERE prev.repository_id = f.repository_id
-                            AND prev.fingerprint = f.fingerprint AND prev.run_id < f.run_id) AS recurring
+                    NOT f.is_new AS recurring
              FROM analysis_findings f JOIN repositories r ON r.id = f.repository_id
              {$where}
              ORDER BY f.id DESC LIMIT " . ($limit + 1)

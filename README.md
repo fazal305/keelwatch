@@ -180,6 +180,17 @@ individual commit authors: these are signals about repositories as Keelwatch
 observed them, not a measure of anyone's ability. The reasoning and the
 default thresholds are in `docs/adr/0004-readiness-signals.md`.
 
+## Performance
+
+Measured benchmarks live in `bench/` and run only against the test database.
+Results, conditions and what is still unverified are in
+[`docs/performance.md`](docs/performance.md). Highlights from the development
+machine:
+- the job queue scales near-linearly to 8 workers, at 444 no-op jobs/s;
+- webhook ingestion is 7.5 ms p50 in-process;
+- every dashboard endpoint except readiness answers in under 400 ms against a
+  90-day, 60k-finding history.
+
 ## Tests
 
 ```bash

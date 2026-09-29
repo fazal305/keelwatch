@@ -57,12 +57,7 @@ def build_run_digest(conn: Connection, run_id: int) -> dict[str, Any]:
         """
         SELECT f.fingerprint, f.severity, f.confidence, f.title, f.file_path, f.line_start,
                f.source, f.rule_id,
-               EXISTS (
-                   SELECT 1 FROM analysis_findings prev
-                   WHERE prev.repository_id = f.repository_id
-                     AND prev.fingerprint = f.fingerprint
-                     AND prev.run_id < f.run_id
-               ) AS recurring
+               NOT f.is_new AS recurring
         FROM analysis_findings f
         WHERE f.run_id = %s
         ORDER BY FIELD(f.severity, 'critical', 'high', 'medium', 'low', 'info'), f.id
@@ -224,12 +219,7 @@ def build_daily_digest(conn: Connection, installation_id: int, date_str: str) ->
         findings = _rows(
             conn,
             f"""
-            SELECT f.run_id, f.severity,
-                   NOT EXISTS (
-                       SELECT 1 FROM analysis_findings prev
-                       WHERE prev.repository_id = f.repository_id
-                         AND prev.fingerprint = f.fingerprint AND prev.run_id < f.run_id
-                   ) AS is_new
+            SELECT f.run_id, f.severity, f.is_new
             FROM analysis_findings f WHERE f.run_id IN ({marks})
             """,  # noqa: S608 - placeholders only
             tuple(run_ids),

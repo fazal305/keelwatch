@@ -82,14 +82,12 @@ final class AnalyticsRepository
             $allDurations[] = $ms;
         }
 
-        // Findings per day: "new" = first time this fingerprint appears for the repository.
+        // Findings per day: "new" = first time this fingerprint appears for the
+        // repository. Stored as is_new when the worker saves findings
+        // (migration 0012); computing it per read cost ~450 ms at 60k findings.
         $fScope = $repositoryId === null ? '' : ' AND f.repository_id = ?';
         $stmt = $this->pdo->prepare(
-            "SELECT DATE(f.created_at) AS d, COUNT(*) AS total,
-                    SUM(NOT EXISTS (SELECT 1 FROM analysis_findings prev
-                                     WHERE prev.repository_id = f.repository_id
-                                       AND prev.fingerprint = f.fingerprint
-                                       AND prev.run_id < f.run_id)) AS new_count
+            "SELECT DATE(f.created_at) AS d, COUNT(*) AS total, SUM(f.is_new) AS new_count
                FROM analysis_findings f
               WHERE f.created_at >= ? AND f.created_at < ?{$fScope}
               GROUP BY d"

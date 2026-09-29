@@ -81,6 +81,13 @@ final class AnalyticsTest extends DatabaseTestCase
             "INSERT INTO analysis_findings (run_id, repository_id, phase, fingerprint, severity, category, confidence, title, description, source, rule_id, created_at)
              VALUES (?, ?, 'secrets', ?, ?, ?, 'high', 'Test finding', 'd', 'rule', 'test-rule', UTC_TIMESTAMP(3) - INTERVAL ? DAY)"
         )->execute([$run, $repo, hash('sha256', $fingerprintSeed), $severity, $category, $daysAgo]);
+        // What the worker does after storing a run's findings (mark_new_findings).
+        $this->pdo->prepare('UPDATE analysis_findings f LEFT JOIN analysis_findings prev
+                               ON prev.repository_id = f.repository_id AND prev.fingerprint = f.fingerprint AND prev.run_id < f.run_id
+                              SET f.is_new = (prev.id IS NULL) WHERE f.run_id = ?')->execute([$run]);
+        $this->pdo->prepare('UPDATE analysis_findings later JOIN analysis_findings mine
+                               ON mine.repository_id = later.repository_id AND mine.fingerprint = later.fingerprint
+                              SET later.is_new = 0 WHERE mine.run_id = ? AND later.run_id > mine.run_id')->execute([$run]);
     }
 
     private function get(array $query, ?array $as = null): Response
