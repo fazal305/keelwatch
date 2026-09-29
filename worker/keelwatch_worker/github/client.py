@@ -161,7 +161,9 @@ class GitHubClient:
 
     @staticmethod
     def _check_name(full_name: str) -> None:
-        if not _FULL_NAME.fullmatch(full_name):
+        # "." and ".." pass the character check but would climb out of
+        # /repos/{owner}/ in the request path; GitHub never issues them.
+        if not _FULL_NAME.fullmatch(full_name) or full_name.split("/")[1] in (".", ".."):
             raise GitHubError("invalid repository name")
 
     @staticmethod

@@ -151,7 +151,8 @@ final class App
 
     private function registerRoutes(): void
     {
-        $this->router->get('/healthz', static fn (): Response => Response::json(['status' => 'ok']));
+        // Liveness/readiness probes for load balancers: status words only.
+        $this->router->get('/healthz', static fn (): Response => Response::json(['status' => 'ok']), Router::PUBLIC);
 
         $this->router->get('/readyz', function (): Response {
             $readiness = $this->health->readiness();
@@ -159,15 +160,17 @@ final class App
                 ['status' => $readiness['ready'] ? 'ready' : 'not_ready', 'checks' => $readiness['checks']],
                 $readiness['ready'] ? 200 : 503,
             );
-        });
+        }, Router::PUBLIC);
 
         // Worker IDs and versions are operational detail: signed-in users only.
         $this->router->get('/api/system/health', fn (): Response => Response::json($this->health->report()), Router::VIEWER);
 
         if ($this->webhooks !== null) {
+            // Authenticated by its HMAC signature, not a session.
             $this->router->post(
                 '/webhooks/github',
                 fn (Request $request): Response => $this->webhooks->handle($request, $this->correlationId, $this->requestLogger),
+                Router::PUBLIC,
             );
         }
 
@@ -210,7 +213,7 @@ final class App
             $this->requestLogger->info('login succeeded', ['user_id' => $result->auth->userId]);
             return Response::json(['user' => $result->auth->publicUser(), 'csrf_token' => $result->auth->csrfToken])
                 ->withSessionCookie($result->token, $auth->sessionMaxAgeSeconds(), $secure);
-        });
+        }, Router::PUBLIC);
 
         $this->router->get('/api/auth/session', static fn (Request $r, array $p, AuthContext $a): Response => Response::json(
             ['user' => $a->publicUser(), 'csrf_token' => $a->csrfToken],

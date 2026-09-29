@@ -214,8 +214,10 @@ def test_file_content_decodes_and_handles_absent_or_large_files():
         lambda c: c.file_content(REPO, "/abs", SHA_A, 1, budget()),
         lambda c: c.compare(REPO, "HEAD", SHA_B, 1, budget()),
         lambda c: c.compare("../../x", SHA_A, SHA_B, 1, budget()),
+        lambda c: c.pr_files("owner/..", 1, 1, budget()),
+        lambda c: c.commit_files("owner/.", SHA_A, 1, budget()),
     ],
-    ids=["traversal", "absolute", "non-sha-ref", "bad-repo-name"],
+    ids=["traversal", "absolute", "non-sha-ref", "bad-repo-name", "dotdot-repo", "dot-repo"],
 )
 def test_unsafe_inputs_are_refused_before_any_request(call):
     transport = FakeGitHub({})

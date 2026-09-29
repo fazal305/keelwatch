@@ -252,6 +252,17 @@ final class WebhookTest extends DatabaseTestCase
      * @param array<string, string|null> $headers overrides; null removes a header
      * @param array<string, mixed> $configOverrides
      */
+    public function testProductionDoesNotExposeStepTimings(): void
+    {
+        $accepted = $this->send('push', $this->fixture('push'), 'd-prod-timing', [], ['appEnv' => 'production']);
+        self::assertSame(202, $accepted->status, $accepted->body);
+        self::assertArrayNotHasKey('Server-Timing', $accepted->headers);
+
+        $rejected = $this->send('push', $this->fixture('push'), 'd-prod-timing-bad', ['x-hub-signature-256' => 'sha256=' . str_repeat('0', 64)], ['appEnv' => 'production']);
+        self::assertSame(401, $rejected->status);
+        self::assertArrayNotHasKey('Server-Timing', $rejected->headers);
+    }
+
     private function send(string $event, string $body, string $deliveryId, array $headers = [], array $configOverrides = []): Response
     {
         $config = $this->webhookConfig($configOverrides);

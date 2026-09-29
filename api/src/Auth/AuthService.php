@@ -28,7 +28,15 @@ final class AuthService
     private const USER_LIMIT = 5;
     private const WINDOW_S = 900;
 
-    private ?string $dummyHash = null;
+    /**
+     * Verified against for unknown usernames. Precomputed: generating it per
+     * request (PHP starts fresh every request) added a whole password_hash to
+     * the unknown-user path, which measured 1.9x slower than a wrong password
+     * for a real user (bench/login_timing.php) and so revealed which usernames
+     * exist. Its password was random and discarded; it matches no one.
+     * AuthTimingTest fails if PHP's Argon2id defaults move away from it.
+     */
+    public const DUMMY_HASH = '$argon2id$v=19$m=65536,t=4,p=1$WklnWFp3MElMOEpoZmpBMg$EKtYBNOfPQXS+4rf0453ZggMXL+GiZ/3ne+tehKfURA';
 
     /**
      * @param Closure(): PDO $connect
@@ -59,7 +67,7 @@ final class AuthService
         $user = $stmt->fetch() ?: null;
 
         // Always verify something, so timing doesn't reveal unknown usernames.
-        $hash = $user['password_hash'] ?? $this->dummyHash();
+        $hash = $user['password_hash'] ?? self::DUMMY_HASH;
         $valid = strlen($password) <= self::MAX_PASSWORD && password_verify($password, $hash);
 
         if ($user === null || !$valid || $user['disabled_at'] !== null) {
@@ -248,10 +256,5 @@ final class AuthService
             $pdo->exec('DELETE FROM sessions WHERE expires_at < UTC_TIMESTAMP(3) LIMIT 1000');
             $pdo->exec('DELETE FROM login_failures WHERE window_start < UTC_TIMESTAMP() - INTERVAL 1 DAY LIMIT 1000');
         }
-    }
-
-    private function dummyHash(): string
-    {
-        return $this->dummyHash ??= password_hash(bin2hex(random_bytes(16)), PASSWORD_ARGON2ID);
     }
 }

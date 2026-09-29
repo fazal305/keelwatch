@@ -59,7 +59,11 @@ final class WebhookHandler
             'timings_ms' => array_map(static fn (float $ms): float => round($ms, 2), $this->timings),
         ]);
 
-        return $response->withHeader('Server-Timing', $this->serverTiming());
+        // Step timings are always logged; the header is a development aid and
+        // would tell an unauthenticated caller how far its request got.
+        return $this->config->appEnv === 'production'
+            ? $response
+            : $response->withHeader('Server-Timing', $this->serverTiming());
     }
 
     private function process(Request $request, string $correlationId, Logger $logger): Response

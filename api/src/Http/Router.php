@@ -10,6 +10,9 @@ use Closure;
  * Method + path routing with numeric path parameters ("/api/runs/{id}") and
  * per-route access rules. Parameters only ever match digits, so a path
  * segment can't smuggle anything else into a handler.
+ *
+ * Access defaults to VIEWER (signed in): a route is public only when it says
+ * so, so forgetting the argument fails closed. RouteTableTest pins the table.
  */
 final class Router
 {
@@ -20,22 +23,22 @@ final class Router
     /** @var list<array{method: string, pattern: string, regex: string, access: string, handler: Closure}> */
     private array $routes = [];
 
-    public function get(string $pattern, Closure $handler, string $access = self::PUBLIC): void
+    public function get(string $pattern, Closure $handler, string $access = self::VIEWER): void
     {
         $this->add('GET', $pattern, $handler, $access);
     }
 
-    public function post(string $pattern, Closure $handler, string $access = self::PUBLIC): void
+    public function post(string $pattern, Closure $handler, string $access = self::VIEWER): void
     {
         $this->add('POST', $pattern, $handler, $access);
     }
 
-    public function patch(string $pattern, Closure $handler, string $access = self::PUBLIC): void
+    public function patch(string $pattern, Closure $handler, string $access = self::VIEWER): void
     {
         $this->add('PATCH', $pattern, $handler, $access);
     }
 
-    public function delete(string $pattern, Closure $handler, string $access = self::PUBLIC): void
+    public function delete(string $pattern, Closure $handler, string $access = self::VIEWER): void
     {
         $this->add('DELETE', $pattern, $handler, $access);
     }
@@ -69,6 +72,19 @@ final class Router
                 ->withHeader('Allow', implode(', ', array_unique($allowed)));
         }
         return Response::error(404, 'not_found', 'No route matches this path.');
+    }
+
+    /**
+     * The registered table, for the authorization test.
+     *
+     * @return list<array{method: string, pattern: string, access: string}>
+     */
+    public function routes(): array
+    {
+        return array_map(
+            static fn (array $r): array => ['method' => $r['method'], 'pattern' => $r['pattern'], 'access' => $r['access']],
+            $this->routes,
+        );
     }
 
     /**
