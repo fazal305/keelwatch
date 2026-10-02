@@ -1,0 +1,60 @@
+name: Bug report
+description: Something doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please don't include secrets, tokens, webhook URLs or private code.
+        For security problems, use private vulnerability reporting instead (see SECURITY.md).
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - API / webhooks
+        - Worker / analysis
+        - Dashboard
+        - Notifications
+        - Setup / documentation
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: reference
+    attributes:
+      label: Reference / correlation ID
+      description: Shown as "Reference" in dashboard errors, or `correlation_id` in logs.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      description: Logs redact credentials, but please check before pasting.
+      render: json
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: e.g. 0.1.0 or a1b2c3d
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: e.g. Ubuntu 24.04, PHP 8.4.x, Python 3.12.x, MySQL 8.4.x
