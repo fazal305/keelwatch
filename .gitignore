@@ -35,3 +35,7 @@ db/local-setup.cmd
 db/local-*
 .worker.pid
 .dev-credentials
+
+# Deployment secrets (GitHub App private key)
+secrets/
+backups/

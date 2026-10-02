@@ -844,6 +844,22 @@ a.stat:hover {
   max-width: 72ch;
 }
 
+/* Panels that also hold edge-to-edge tables have no body padding; inset the
+   text, notices and forms so they line up with the panel title. */
+.workers-panel .panel__intro {
+  margin: var(--space-4) var(--space-4) var(--space-4);
+}
+
+.workers-panel .notice,
+.workers-panel .subsection,
+.workers-panel .panel__body > .muted {
+  margin-inline: var(--space-4);
+}
+
+.workers-panel .subsection {
+  padding-bottom: var(--space-4);
+}
+
 .subsection {
   margin-top: var(--space-6);
   padding-top: var(--space-4);
