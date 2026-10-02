@@ -36,7 +36,11 @@ def _store(conn, run_id, repo_id, fingerprint=FP):
 
 
 def _is_new(conn, run_id, fingerprint=FP):
-    return scalar(conn, "SELECT is_new FROM analysis_findings WHERE run_id = %s AND fingerprint = %s", (run_id, fingerprint))
+    return scalar(
+        conn,
+        "SELECT is_new FROM analysis_findings WHERE run_id = %s AND fingerprint = %s",
+        (run_id, fingerprint),
+    )
 
 
 def test_first_occurrence_is_new_and_repeats_are_recurring(conn):
