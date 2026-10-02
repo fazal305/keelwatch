@@ -76,6 +76,7 @@ records in [docs/adr/](docs/adr/).
 | `contracts/` | JSON Schemas and fixtures shared by the PHP and Python test suites |
 | `bench/` | Benchmarks (test database only); results in [docs/performance.md](docs/performance.md) |
 | `scripts/` | Signed test webhooks and the sample-data seeder |
+| `deploy/`, `compose.yaml` | Container images, Caddy config, backup and restore scripts |
 
 ## Quick start
 
@@ -237,9 +238,24 @@ Logs are structured JSON on stdout/stderr with credentials redacted. A
 correlation ID follows each delivery through its jobs and runs, and appears
 as "Reference" in the dashboard's error messages.
 
-A production deployment guide is not written yet. Until it is, run the
-API behind an HTTPS reverse proxy, keep `APP_ENV=production` (secure cookies,
-no timing headers), and run at least one worker under a process supervisor.
+## Deployment
+
+Production runs with Docker Compose: Caddy (automatic HTTPS, the dashboard,
+strict CSP), the PHP-FPM API, any number of workers, and MySQL, with
+migrations applied before the app starts.
+
+```bash
+cp .env.example .env      # set APP_ENV=production, SESSION_COOKIE_SECURE=true,
+                          # KEELWATCH_DOMAIN and the secrets
+docker compose up -d --build
+docker compose run --rm api php api/bin/user.php create admin --role=admin
+```
+
+[docs/deployment.md](docs/deployment.md) covers requirements, configuration,
+the GitHub App key, upgrades, scaling, backups and restore
+(`deploy/backup.sh`, `deploy/restore.sh`), secret rotation and
+troubleshooting. CI builds the images and smoke-tests the stack on every
+pull request.
 
 ## Tests
 
@@ -257,6 +273,7 @@ tests mock the API and check for horizontal overflow at 375 to 1440 px.
 ## Documentation
 
 - [Architecture](docs/architecture.md): components, data flow, queues, data model
+- [Deployment](docs/deployment.md): Docker Compose in production, operations, backups
 - [Decision records](docs/adr/): stack, escaping, LLM privacy, readiness signals
 - [Security audit](docs/security-audit.md): findings, fixes and accepted risks
 - [Performance](docs/performance.md): measured benchmarks and their conditions
