@@ -19,7 +19,9 @@ from keelwatch_worker.notify.destinations import (
 from keelwatch_worker.notify.format import meets_threshold, render_daily, render_run
 
 VECTORS_DIR = Path(__file__).resolve().parents[2] / "contracts" / "test-vectors"
-VECTOR = json.loads((VECTORS_DIR / "notification-url-encryption.v1.json").read_text(encoding="utf-8"))
+VECTOR = json.loads(
+    (VECTORS_DIR / "notification-url-encryption.v1.json").read_text(encoding="utf-8")
+)
 URL_CASES = json.loads(
     (VECTORS_DIR / "notification-destination-urls.v1.json").read_text(encoding="utf-8")
 )
@@ -107,9 +109,7 @@ def test_shared_vector_valid_urls(case):
     assert validate_url(case["kind"], case["url"]) == case["host"]
 
 
-@pytest.mark.parametrize(
-    "case", URL_CASES["invalid"] + GENERATED_INVALID, ids=lambda c: c["why"]
-)
+@pytest.mark.parametrize("case", URL_CASES["invalid"] + GENERATED_INVALID, ids=lambda c: c["why"])
 def test_shared_vector_invalid_urls(case):
     with pytest.raises(InvalidDestination):
         validate_url(case["kind"], case["url"])
