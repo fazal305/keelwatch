@@ -48,9 +48,11 @@ final class IntegrationsTest extends DatabaseTestCase
 
         $adminPw = bin2hex(random_bytes(12));
         $viewerPw = bin2hex(random_bytes(12));
-        AuthService::createUser($this->pdo, 'ada', $adminPw, 'admin');
+        // Usernames contain non-hex letters, so random hex passwords and hashes
+        // can never contain them (the password policy rejects that; see checkPolicy).
+        AuthService::createUser($this->pdo, 'alan', $adminPw, 'admin');
         AuthService::createUser($this->pdo, 'vic', $viewerPw, 'viewer');
-        $this->admin = $this->signIn('ada', $adminPw);
+        $this->admin = $this->signIn('alan', $adminPw);
         $this->viewer = $this->signIn('vic', $viewerPw);
 
         $this->pdo->exec("INSERT INTO installations (github_installation_id, account_login, account_type) VALUES (7001, 'example-org', 'Organization')");

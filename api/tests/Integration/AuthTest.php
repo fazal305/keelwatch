@@ -33,7 +33,9 @@ final class AuthTest extends DatabaseTestCase
         $this->config = $this->config->with(['sessionCookieSecure' => false]);
         $this->adminPassword = bin2hex(random_bytes(12));
         $this->viewerPassword = bin2hex(random_bytes(12));
-        AuthService::createUser($this->pdo, 'ada', $this->adminPassword, 'admin');
+        // Usernames contain non-hex letters, so random hex passwords and hashes
+        // can never contain them (the password policy rejects that; see checkPolicy).
+        AuthService::createUser($this->pdo, 'alan', $this->adminPassword, 'admin');
         AuthService::createUser($this->pdo, 'vic', $this->viewerPassword, 'viewer');
         $this->now = time();
         $this->app = $this->makeApp();
@@ -74,12 +76,12 @@ final class AuthTest extends DatabaseTestCase
 
     public function testSignInSetsAHardenedCookieAndOpensTheDashboard(): void
     {
-        $response = $this->request('POST', '/api/auth/login', ['username' => 'ADA ', 'password' => $this->adminPassword]);
+        $response = $this->request('POST', '/api/auth/login', ['username' => 'ALAN ', 'password' => $this->adminPassword]);
 
         self::assertSame(200, $response->status);
         self::assertMatchesRegularExpression('/^kw_session=[0-9a-f]{64}; Path=\/; Max-Age=43200; HttpOnly; SameSite=Strict$/', $response->headers['Set-Cookie']);
         $body = json_decode($response->body, true);
-        self::assertSame(['id' => $body['user']['id'], 'username' => 'ada', 'role' => 'admin'], $body['user']);
+        self::assertSame(['id' => $body['user']['id'], 'username' => 'alan', 'role' => 'admin'], $body['user']);
         self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $body['csrf_token']);
 
         preg_match('/^kw_session=([0-9a-f]{64})/', $response->headers['Set-Cookie'], $m);
@@ -92,7 +94,7 @@ final class AuthTest extends DatabaseTestCase
 
     public function testWrongPasswordAndUnknownUserGetTheSameAnswer(): void
     {
-        $wrong = $this->request('POST', '/api/auth/login', ['username' => 'ada', 'password' => 'not-the-password-123']);
+        $wrong = $this->request('POST', '/api/auth/login', ['username' => 'alan', 'password' => 'not-the-password-123']);
         $unknown = $this->request('POST', '/api/auth/login', ['username' => 'nobody', 'password' => 'not-the-password-123']);
 
         self::assertSame(401, $wrong->status);
@@ -103,7 +105,7 @@ final class AuthTest extends DatabaseTestCase
 
     public function testMissingFieldsAreReportedPerField(): void
     {
-        $response = $this->request('POST', '/api/auth/login', ['username' => 'ada']);
+        $response = $this->request('POST', '/api/auth/login', ['username' => 'alan']);
 
         self::assertSame(422, $response->status);
         self::assertSame(['password' => 'Enter your password.'], json_decode($response->body, true)['error']['fields']);
@@ -118,7 +120,7 @@ final class AuthTest extends DatabaseTestCase
 
     public function testStateChangesNeedTheCsrfTokenAndAnAllowedOrigin(): void
     {
-        $s = $this->signIn('ada', $this->adminPassword);
+        $s = $this->signIn('alan', $this->adminPassword);
 
         $noToken = $this->request('POST', '/api/auth/logout', null, ['cookie' => $s['cookie']]);
         $wrongToken = $this->request('POST', '/api/auth/logout', null, ['cookie' => $s['cookie'], 'x-csrf-token' => str_repeat('0', 64)]);
@@ -165,23 +167,23 @@ final class AuthTest extends DatabaseTestCase
     public function testRepeatedFailuresForOneUserAreThrottled(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            self::assertSame(401, $this->request('POST', '/api/auth/login', ['username' => 'ada', 'password' => "wrong-password-{$i}xx"], [], "203.0.113.{$i}")->status);
+            self::assertSame(401, $this->request('POST', '/api/auth/login', ['username' => 'alan', 'password' => "wrong-password-{$i}xx"], [], "203.0.113.{$i}")->status);
         }
 
-        $limited = $this->request('POST', '/api/auth/login', ['username' => 'ada', 'password' => $this->adminPassword], [], '203.0.113.99');
+        $limited = $this->request('POST', '/api/auth/login', ['username' => 'alan', 'password' => $this->adminPassword], [], '203.0.113.99');
         self::assertSame(429, $limited->status, 'even the right password is refused while throttled');
         self::assertGreaterThan(0, (int) $limited->headers['Retry-After']);
 
         $this->now += 901; // next window
-        self::assertSame(200, $this->request('POST', '/api/auth/login', ['username' => 'ada', 'password' => $this->adminPassword])->status);
+        self::assertSame(200, $this->request('POST', '/api/auth/login', ['username' => 'alan', 'password' => $this->adminPassword])->status);
     }
 
     public function testThrottleBucketsNeverStoreUsernamesOrIps(): void
     {
-        $this->request('POST', '/api/auth/login', ['username' => 'ada', 'password' => 'wrong-password-xx']);
+        $this->request('POST', '/api/auth/login', ['username' => 'alan', 'password' => 'wrong-password-xx']);
         $dump = json_encode($this->pdo->query('SELECT * FROM login_failures')->fetchAll());
 
-        self::assertStringNotContainsString('ada', $dump);
+        self::assertStringNotContainsString('alan', $dump);
         self::assertStringNotContainsString('198.51.100.9', $dump);
     }
 
@@ -209,7 +211,7 @@ final class AuthTest extends DatabaseTestCase
 
     public function testPasswordsAreStoredAsArgon2id(): void
     {
-        $hash = (string) $this->pdo->query("SELECT password_hash FROM users WHERE username = 'ada'")->fetchColumn();
+        $hash = (string) $this->pdo->query("SELECT password_hash FROM users WHERE username = 'alan'")->fetchColumn();
 
         self::assertStringStartsWith('$argon2id$', $hash);
         self::assertStringNotContainsString($this->adminPassword, $hash);
