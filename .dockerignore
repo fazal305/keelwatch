@@ -1,0 +1,24 @@
+# Build contexts only need source; never secrets or local build output.
+.git
+.github
+.env
+.env.*
+secrets
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+api/vendor
+api/.phpunit.cache
+api/tests
+worker/.venv
+worker/tests
+web/dist
+web/test-results
+web/playwright-report
+web/e2e
+docs
+bench
+scripts
+db/local-*
+*.log
