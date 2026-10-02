@@ -27,7 +27,7 @@ jobs:
       DB_TEST_NAME: keelwatch_test
       DB_USER: root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Throwaway secrets for a container and a job that live only for this run.
       - name: Generate job secrets
@@ -84,7 +84,7 @@ jobs:
     env: *test-env
     needs: api
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Generate job secrets
         run: |
@@ -152,7 +152,7 @@ jobs:
     name: Web (React)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -188,7 +188,7 @@ jobs:
     name: Containers (Docker Compose)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Throwaway production-mode configuration for this run only.
       - name: Write .env
