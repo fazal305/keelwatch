@@ -122,7 +122,7 @@ jobs:
           composer install --no-interaction --no-progress --no-dev
           php bin/migrate.php --test
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip
