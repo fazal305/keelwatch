@@ -14,7 +14,7 @@ system; it is not a substitute for an independent audit.
 | S2 | Medium | Authorization | Routes defaulted to **public** when a route forgot its access level (fail-open) | Fixed |
 | S3 | Low | Webhook | The webhook's `Server-Timing` header told unauthenticated callers how far their request got | Fixed |
 | S4 | Low | SSRF | Repository names `owner/.` and `owner/..` passed the GitHub client's name check | Fixed |
-| S5 | Low | Dependencies | The worker venv's **pip 25.0.1** has 12 known advisories (installer tooling, not a runtime dependency) | **Open**: needs an upgrade (see below) |
+| S5 | Low | Dependencies | The worker venv's **pip 25.0.1** has 12 known advisories (installer tooling, not a runtime dependency) | **Fixed for new installs**; existing venvs need a one-time upgrade (see below) |
 | S6 | Info | Webhook | GitHub signs the body but not the delivery ID, so a captured, signed body could be resent under a new ID | Accepted, impact bounded |
 | S7 | Info | Notifications | Private-repository messages include the PR number and short commit SHA | Accepted |
 | S8 | Info | Database | The app's MySQL user can't read `performance_schema` or `mysql.user` | Confirmed as intended (least privilege) |
@@ -71,17 +71,20 @@ system; it is not a substitute for an independent audit.
 - **Now:** rejected before any request, with two new cases in
   `test_unsafe_inputs_are_refused_before_any_request`.
 
-### S5: pip in the worker venv (Low, open)
+### S5: pip in the worker venv (Low, fixed for new installs)
 
 - **Result:** OSV.dev lists 12 advisories for pip 25.0.1, mostly about
   handling malicious package archives during installs.
 - **Scope:** it isn't imported at runtime, but it ships in any venv-based
   deployment.
-- **Why still open:** the fix downloads from PyPI, so it waits for approval.
-- **Fix:**
+- **Fix:** the README's setup now upgrades pip right after creating the venv.
+  pip 26.2.1 (current on 2026-10-02) has no known advisories (`pip-audit`).
+- **Still to do:** a venv created before this change keeps its old pip until
+  it is upgraded once:
 
   ```bash
-  worker/.venv/Scripts/python.exe -m pip install --upgrade pip
+  worker/.venv/Scripts/python.exe -m pip install --upgrade pip   # Windows
+  worker/.venv/bin/python -m pip install --upgrade pip           # Linux/macOS
   ```
 
 ### S6: webhook replay under a new delivery ID (Info, accepted)

@@ -101,7 +101,7 @@ Install dependencies, apply migrations and create the first admin:
 
 ```bash
 (cd api && composer install && php bin/migrate.php && php bin/migrate.php --test)
-(cd worker && python -m venv .venv && .venv/bin/pip install -r requirements-dev.txt)
+(cd worker && python -m venv .venv && .venv/bin/python -m pip install --upgrade pip && .venv/bin/pip install -r requirements-dev.txt)
 (cd web && npm install)
 php api/bin/user.php create admin --role=admin      # prints a one-time password
 ```
