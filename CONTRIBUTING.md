@@ -106,5 +106,6 @@ database you care about.
 - Add an ADR in `docs/adr/` for decisions that are hard to reverse: new
   infrastructure, a new external service, or a change to privacy defaults.
 
-By contributing, you agree that your contributions are licensed under the
-[MIT License](LICENSE).
+## Contributor License Agreement
+
+This project is licensed under the PolyForm Noncommercial License 1.0.0, with paid commercial licenses available from the maintainer. Contributions are accepted only under the [Contributor License Agreement](CLA.md), which lets the maintainer relicense and sell them. Pull requests are merged only after you have agreed to it in the pull request template.

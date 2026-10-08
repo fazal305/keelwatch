@@ -3,7 +3,7 @@ name = "keelwatch-worker"
 version = "0.1.0"
 description = "Keelwatch analysis worker"
 requires-python = ">=3.12"
-license = "MIT"
+license = "PolyForm-Noncommercial-1.0.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

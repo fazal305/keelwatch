@@ -14,3 +14,7 @@
 - [ ] UI changes handle loading, empty and error states and don't overflow at 375 px
 - [ ] No secrets, tokens, real webhook URLs or private code in code, tests or fixtures
 - [ ] Docs updated (README, `.env.example`, ADR for hard-to-reverse decisions)
+
+## Contributor License Agreement
+
+- [ ] I have read `CLA.md` (in the repository root) and agree to its terms for this contribution.

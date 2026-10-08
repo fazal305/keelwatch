@@ -2,7 +2,7 @@
     "name": "keelwatch/api",
     "description": "Keelwatch webhook ingestion and dashboard API",
     "type": "project",
-    "license": "MIT",
+    "license": "PolyForm-Noncommercial-1.0.0",
     "require": {
         "php": ">=8.3",
         "ext-json": "*",

@@ -1,7 +1,7 @@
 # Keelwatch
 
 [![CI](https://github.com/fazal305/keelwatch/actions/workflows/ci.yml/badge.svg)](https://github.com/fazal305/keelwatch/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue.svg)](LICENSE)
 
 Keelwatch turns GitHub repository activity into evidence-backed engineering
 signals. Every push and pull request is analysed in the background for
@@ -287,4 +287,8 @@ privately as described in [SECURITY.md](SECURITY.md), not in public issues.
 
 ## License
 
-[MIT](LICENSE)
+Free for personal, educational, and noncommercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
+Commercial use requires a paid commercial license. Contact fazalabbas2002@gmail.com.
+
+Versions up to and including `v0.1.0-mit` were released under the MIT License and remain available under MIT.
