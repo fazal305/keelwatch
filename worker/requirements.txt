@@ -2,4 +2,4 @@ PyMySQL==1.2.3
 python-dotenv==1.2.3
 # GitHub App auth needs RS256 JWTs; the standard library can't sign them.
 PyJWT[crypto]==2.15.1
-cryptography==50.0.1
+cryptography==50.0.2
