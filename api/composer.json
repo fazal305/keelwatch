@@ -31,7 +31,7 @@
         "process-timeout": 0
     },
     "require-dev": {
-        "opis/json-schema": "2.6",
+        "opis/json-schema": "2.6.2",
         "phpunit/phpunit": "^13.3"
     }
 }
